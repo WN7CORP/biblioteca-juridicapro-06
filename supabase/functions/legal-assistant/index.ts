@@ -32,16 +32,30 @@ serve(async (req) => {
     if (action === "summarize") {
       prompt = `Por favor, crie um resumo abrangente e detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O resumo deve cobrir os principais conceitos, argumentos e conclusões do livro, mantendo a estrutura 
-      organizada em tópicos claros e destacando os pontos mais importantes para estudantes de direito.`;
+      organizada em tópicos claros e destacando os pontos mais importantes para estudantes de direito.
+      Use formatação Markdown para melhorar a legibilidade, com títulos (##), listas (*), negrito (**texto**) e itálico (*texto*) quando apropriado.`;
     } else if (action === "mindmap") {
       prompt = `Crie um mapa mental detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O mapa mental deve representar os principais conceitos e suas conexões, usando uma estrutura hierárquica 
       com o tema central, ramificações principais e sub-ramificações. Apresente em formato textual estruturado 
-      que um estudante de direito possa facilmente transformar em um mapa visual.`;
+      que um estudante de direito possa facilmente compreender.
+      Use formatação Markdown para criar uma estrutura visual clara, com títulos (##), sublistas, e marcadores.
+      Use o formato:
+      
+      ## Tema Central: ${bookTitle}
+      
+      ### Conceito Principal 1
+      * Subconcito 1.1
+        * Detalhe
+      * Subconcito 1.2
+      
+      ### Conceito Principal 2
+      ...`;
     } else {
       // For Q&A
       prompt = `Como assistente jurídico especialista no livro "${bookTitle}" da área de "${bookArea}", 
-      por favor responda à seguinte pergunta de forma detalhada e precisa: ${query}`;
+      por favor responda à seguinte pergunta de forma detalhada, precisa e concisa: ${query}
+      Use formatação Markdown para estruturar sua resposta, como títulos (##), listas (*), negrito (**texto**) e itálico (*texto*) quando apropriado.`;
     }
 
     // Call Gemini API
@@ -63,7 +77,7 @@ serve(async (req) => {
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
       responseText = data.candidates[0].content.parts[0].text;
     } else {
-      responseText = "Desculpe, não consegui processar sua solicitação. Por favor, tente novamente.";
+      responseText = "## Desculpe, não consegui processar sua solicitação.\n\nPor favor, tente novamente mais tarde.";
     }
 
     // Store interaction in the database
