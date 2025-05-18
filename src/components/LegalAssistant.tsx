@@ -34,9 +34,25 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Load conversation history when component mounts
+  // Load conversation history and add welcome message when component mounts
   useEffect(() => {
     if (isOpen && book) {
+      if (messages.length === 0) {
+        // Add initial welcome message from the assistant
+        const welcomeMessage: MessageType = {
+          role: 'assistant',
+          content: `Olá! Sou seu assistente jurídico especializado em ${book.area}. Posso te ajudar com:
+          
+- **Perguntas**: Tire suas dúvidas sobre "${book.livro}"
+- **Resumo**: Gere um resumo completo do conteúdo
+- **Mapa Mental**: Visualize os conceitos principais de forma estruturada
+          
+Como posso ajudar você hoje?`,
+          timestamp: new Date()
+        };
+        
+        setMessages([welcomeMessage]);
+      }
       loadConversationHistory();
     }
   }, [isOpen, book.id]);
@@ -229,26 +245,36 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-netflix-accent text-white rounded-full p-3 shadow-lg hover:bg-[#c11119] transition-colors z-50"
+        className="fixed bottom-6 right-6 bg-netflix-accent text-white rounded-full p-3 shadow-lg hover:bg-[#c11119] transition-colors z-50 animate-pulse"
         aria-label="Assistente Jurídico"
       >
         <MessageSquare size={24} />
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-netflix-background border-netflix-cardHover text-netflix-text sm:max-w-[650px] max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className="bg-netflix-background border-netflix-cardHover text-netflix-text sm:max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="flex-shrink-0 p-4 border-b border-netflix-cardHover">
             <DialogTitle className="text-xl text-white flex items-center">
               <MessageSquare className="mr-2" size={20} />
               Assistente Jurídico
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="ml-auto text-netflix-text hover:text-white p-1"
+              >
+                <X size={20} />
+              </button>
             </DialogTitle>
-            <p className="text-sm text-netflix-text">
+            <p className="text-sm text-netflix-accent">
               Assistente para "{book.livro}" - {book.area}
             </p>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden p-4">
             <TabsList className="grid grid-cols-3 mb-4 flex-shrink-0">
+              <TabsTrigger value="qa" className="flex items-center gap-1">
+                <HelpCircle size={16} />
+                <span className="hidden sm:inline">Perguntas</span>
+              </TabsTrigger>
               <TabsTrigger value="summarize" className="flex items-center gap-1">
                 <BookOpen size={16} />
                 <span className="hidden sm:inline">Resumo</span>
@@ -257,22 +283,18 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                 <Network size={16} />
                 <span className="hidden sm:inline">Mapa Mental</span>
               </TabsTrigger>
-              <TabsTrigger value="qa" className="flex items-center gap-1">
-                <HelpCircle size={16} />
-                <span className="hidden sm:inline">Perguntas</span>
-              </TabsTrigger>
             </TabsList>
 
-            <div className="overflow-y-auto flex-1 mb-4 conversation-container">
+            <div className="overflow-y-auto flex-1 mb-4 conversation-container pr-2">
               {messages.length > 0 && (
-                <div className="space-y-4 mb-4 p-2">
+                <div className="space-y-4 mb-4">
                   {messages.map((msg, index) => (
                     <div 
                       key={index} 
                       className={`${
                         msg.role === 'user' 
-                          ? 'bg-netflix-card text-right ml-12' 
-                          : 'bg-[#232323] mr-12'
+                          ? 'bg-netflix-card text-right ml-12 animate-fade-in' 
+                          : 'bg-[#232323] mr-12 animate-fade-in'
                       } p-3 rounded-lg`}
                     >
                       <p className="text-xs text-netflix-secondary mb-1">
@@ -394,7 +416,7 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
               </TabsContent>
 
               <TabsContent value="qa" className="m-0">
-                <div className="space-y-4">
+                <div className="space-y-4 mt-auto">
                   <div className="relative">
                     <Textarea
                       placeholder="Digite sua pergunta sobre este livro..."
@@ -462,6 +484,19 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
           @keyframes pulse {
             0%, 50%, 100% { transform: scale(1); opacity: 1; }
             25%, 75% { transform: scale(0.8); opacity: 0.6; }
+          }
+          
+          @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+          }
+          
+          .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
           
           .conversation-container {

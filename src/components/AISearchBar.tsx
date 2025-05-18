@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,7 +12,7 @@ import BookCard from '@/components/BookCard';
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [showAISearch, setShowAISearch] = useState(false);
+  const [showAISearch, setShowAISearch] = useState(true); // Default to AI search
   const [aiConversation, setAiConversation] = useState<string[]>([]);
   const [matchedBooks, setMatchedBooks] = useState<Book[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -159,24 +158,25 @@ const AISearchBar: React.FC = () => {
                     placeholder="Descreva o que você quer estudar..."
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
-                    className="bg-netflix-card border-netflix-cardHover text-sm w-full pr-10"
+                    className="bg-netflix-card border-netflix-accent border-2 text-sm w-full pr-10"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && aiQuery.trim()) {
-                        e.preventDefault(); // Prevent form submission
+                        e.preventDefault();
                         handleNextQuestion(aiQuery);
                       }
                     }}
                   />
-                  <BookOpen className="absolute right-3 top-1/2 -translate-y-1/2 text-netflix-secondary" size={16} />
+                  <BookOpen className="absolute right-3 top-1/2 -translate-y-1/2 text-netflix-accent" size={16} />
                 </div>
                 <Button
                   onClick={startAISearch}
-                  className="bg-netflix-accent hover:bg-[#c11119] min-w-[100px]"
+                  className="bg-netflix-accent hover:bg-[#c11119] min-w-[100px] font-bold"
                 >
-                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "IA Busca"}
                 </Button>
               </div>
             </DrawerTrigger>
+            
             <DrawerContent className="max-h-[90vh]">
               <div className="p-4 space-y-4">
                 <h3 className="text-lg font-semibold">Assistente de Busca</h3>
@@ -254,8 +254,8 @@ const AISearchBar: React.FC = () => {
             </DrawerContent>
           </Drawer>
           
-          <p className="text-xs text-netflix-secondary mt-1">
-            Descreva o assunto que deseja estudar e encontraremos o livro ideal para você
+          <p className="text-xs text-netflix-accent mt-1 font-semibold animate-pulse">
+            Utilize nossa IA para encontrar o material jurídico ideal para você ✨
           </p>
         </div>
       ) : (
