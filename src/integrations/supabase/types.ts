@@ -519,6 +519,36 @@ export type Database = {
         }
         Relationships: []
       }
+      book_assistant_history: {
+        Row: {
+          book_id: number
+          created_at: string
+          id: string
+          interaction_type: string
+          query: string
+          response: string | null
+          user_ip: string
+        }
+        Insert: {
+          book_id: number
+          created_at?: string
+          id?: string
+          interaction_type: string
+          query: string
+          response?: string | null
+          user_ip: string
+        }
+        Update: {
+          book_id?: number
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          query?: string
+          response?: string | null
+          user_ip?: string
+        }
+        Relationships: []
+      }
       book_favorites: {
         Row: {
           book_id: number

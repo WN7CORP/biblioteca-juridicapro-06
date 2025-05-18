@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
+import LegalAssistant from '@/components/LegalAssistant';
 
 const ReadBook = () => {
   const { bookId } = useParams<{ bookId: string }>();
@@ -45,6 +46,9 @@ const ReadBook = () => {
           allowFullScreen
         />
       </div>
+      
+      {/* Add the Legal Assistant component */}
+      <LegalAssistant book={book} />
     </div>
   );
 };
