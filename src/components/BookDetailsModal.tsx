@@ -33,7 +33,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
       if (!open) onClose();
     }}>
       <DialogContent className="bg-netflix-background border-netflix-cardHover max-w-md p-0 overflow-hidden animate-dialog-entry">
-        {/* Hidden but necessary for accessibility */}
+        {/* Properly implemented accessibility elements */}
         <DialogTitle className="sr-only">{book.livro}</DialogTitle>
         <DialogDescription className="sr-only">Detalhes do livro e opções</DialogDescription>
         
@@ -45,6 +45,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
           />
           <DialogClose className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-opacity">
             <X size={20} className="text-white" />
+            <span className="sr-only">Fechar</span>
           </DialogClose>
           <div className="absolute inset-0 bg-gradient-to-t from-netflix-background to-transparent"></div>
         </div>

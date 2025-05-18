@@ -60,8 +60,14 @@ const AISearchBar: React.FC = () => {
   }
 
   const handleNextQuestion = async (response: string) => {
-    const newConversation = [...aiConversation, `Você: ${response}`];
-    setAiConversation(newConversation);
+    // Prevent duplicate questions by checking if we've already added the response
+    const newConversation = [...aiConversation];
+    
+    // Only add the user's response if it's not already the last item
+    if (newConversation.length === 0 || !newConversation[newConversation.length - 1].startsWith(`Você: ${response}`)) {
+      newConversation.push(`Você: ${response}`);
+      setAiConversation(newConversation);
+    }
     
     setIsSearching(true);
     setIsTyping(true);
@@ -73,7 +79,12 @@ const AISearchBar: React.FC = () => {
       // Still have more questions to ask
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setAiConversation([...newConversation, `Assistente: ${questions[nextIndex]}`]);
+      
+      // Check if this assistant message is already in the conversation
+      const assistantMessage = `Assistente: ${questions[nextIndex]}`;
+      if (!newConversation.some(msg => msg === assistantMessage)) {
+        setAiConversation([...newConversation, assistantMessage]);
+      }
     } else {
       // Final question answered, search for books
       const allResponses = [...aiConversation, response].join(' ');
@@ -289,7 +300,7 @@ const AISearchBar: React.FC = () => {
                   )}
                   
                   {/* Conversation history in a scrollable area with improved scrolling */}
-                  <ScrollArea className="flex-1 min-h-0 pr-2 overflow-y-auto" ref={scrollAreaRef}>
+                  <ScrollArea className="flex-1 min-h-0 h-full w-full overflow-y-auto pr-2">
                     <div className="space-y-4 pb-4">
                       {aiConversation.map((message, idx) => (
                         <div 
