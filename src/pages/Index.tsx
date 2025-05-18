@@ -51,17 +51,19 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-netflix-background text-netflix-text">
+    <div className="min-h-screen bg-netflix-background text-netflix-text" data-intro="welcome">
       {isMobile ? <MobileNav /> : <Header />}
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
         {/* Search Bar with AI Integration */}
-        <AISearchBar />
+        <div data-intro="search">
+          <AISearchBar />
+        </div>
         
         {/* Statistics Overview */}
         <AreaStats />
         
         {/* Featured Areas with colorful cards */}
-        <div className="mb-10">
+        <div className="mb-10" data-intro="areas">
           <h2 className="text-lg font-bold mb-4 flex items-center">
             <BookIcon className="mr-2" size={20} />
             Áreas de Direito
@@ -107,13 +109,10 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Area Filter + Book Grid */}
-        <h2 className="text-lg font-bold mb-4">Biblioteca Completa</h2>
-        <AreaFilter />
-        <BookGrid books={filteredBooks} onBookClick={handleBookClick} />
-        
         {/* FAQ Section */}
-        <FAQ />
+        <div data-intro="faq">
+          <FAQ />
+        </div>
       </div>
       <BookDetailsModal 
         book={selectedBook} 

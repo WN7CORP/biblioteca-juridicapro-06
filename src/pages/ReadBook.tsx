@@ -25,9 +25,8 @@ const ReadBook = () => {
     return null;
   }
 
-  // Improved back button handler with proper navigation
-  const handleGoBack = (e: React.MouseEvent) => {
-    e.preventDefault();
+  // Fixed back button handler to work properly without double click
+  const handleGoBack = () => {
     navigate(-1);
   };
 

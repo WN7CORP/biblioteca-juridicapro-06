@@ -22,7 +22,10 @@ const MobileNav: React.FC = () => {
   ];
   
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-netflix-background mobile-nav flex justify-around items-center py-3 border-b border-netflix-cardHover shadow-lg">
+    <nav 
+      className="fixed top-0 left-0 right-0 z-50 bg-netflix-background mobile-nav flex justify-around items-center py-3 border-b border-netflix-cardHover shadow-lg"
+      data-intro="navigation"
+    >
       {navItems.map((item) => (
         <button
           key={item.path}
