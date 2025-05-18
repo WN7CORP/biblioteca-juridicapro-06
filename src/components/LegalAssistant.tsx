@@ -251,11 +251,11 @@ Como posso ajudar você hoje?`,
         <MessageSquare size={24} />
       </button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-netflix-background border-netflix-cardHover text-netflix-text sm:max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-hidden flex flex-col p-0">
+      <Dialog open={isOpen} onOpenChange={setIsOpen} modal={true}>
+        <DialogContent className="bg-netflix-background border-netflix-cardHover text-netflix-text max-w-full w-[95vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="flex-shrink-0 p-4 border-b border-netflix-cardHover">
             <DialogTitle className="text-xl text-white flex items-center">
-              <MessageSquare className="mr-2" size={20} />
+              <MessageSquare className="mr-2 text-netflix-accent" size={20} />
               Assistente Jurídico
               <button 
                 onClick={() => setIsOpen(false)} 
@@ -293,9 +293,9 @@ Como posso ajudar você hoje?`,
                       key={index} 
                       className={`${
                         msg.role === 'user' 
-                          ? 'bg-netflix-card text-right ml-12 animate-fade-in' 
-                          : 'bg-[#232323] mr-12 animate-fade-in'
-                      } p-3 rounded-lg`}
+                          ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
+                          : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                      }`}
                     >
                       <p className="text-xs text-netflix-secondary mb-1">
                         {msg.role === 'user' ? 'Você' : 'Assistente'}
@@ -315,7 +315,7 @@ Como posso ajudar você hoje?`,
               
               <TabsContent value="summarize" className="m-0">
                 {showConfirmation ? (
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <BookOpen size={40} className="mb-4 text-netflix-accent" />
                     <h3 className="text-lg font-medium mb-2">Gerar Resumo</h3>
                     <p className="text-sm mb-4">
@@ -340,7 +340,7 @@ Como posso ajudar você hoje?`,
                   </div>
                 ) : (
                   isTyping ? (
-                    <div className="whitespace-pre-line p-4 rounded bg-netflix-card">
+                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
                       <ReactMarkdown components={markdownComponents}>
                         {response}
                       </ReactMarkdown>
@@ -351,7 +351,7 @@ Como posso ajudar você hoje?`,
                       </div>
                     </div>
                   ) : response ? (
-                    <div className="whitespace-pre-line p-4 rounded bg-netflix-card">
+                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
                       <ReactMarkdown components={markdownComponents}>
                         {response}
                       </ReactMarkdown>
@@ -366,7 +366,7 @@ Como posso ajudar você hoje?`,
 
               <TabsContent value="mindmap" className="m-0">
                 {showConfirmation ? (
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <Network size={40} className="mb-4 text-netflix-accent" />
                     <h3 className="text-lg font-medium mb-2">Gerar Mapa Mental</h3>
                     <p className="text-sm mb-4">
@@ -391,7 +391,7 @@ Como posso ajudar você hoje?`,
                   </div>
                 ) : (
                   isTyping ? (
-                    <div className="whitespace-pre-line p-4 rounded bg-netflix-card">
+                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
                       <ReactMarkdown components={markdownComponents}>
                         {response}
                       </ReactMarkdown>
@@ -402,7 +402,7 @@ Como posso ajudar você hoje?`,
                       </div>
                     </div>
                   ) : response ? (
-                    <div className="whitespace-pre-line p-4 rounded bg-netflix-card">
+                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
                       <ReactMarkdown components={markdownComponents}>
                         {response}
                       </ReactMarkdown>

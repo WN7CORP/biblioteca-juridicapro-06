@@ -177,26 +177,37 @@ const AISearchBar: React.FC = () => {
               </div>
             </DrawerTrigger>
             
-            <DrawerContent className="max-h-[90vh]">
+            <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover">
               <div className="p-4 space-y-4">
-                <h3 className="text-lg font-semibold">Assistente de Busca</h3>
+                <h3 className="text-lg font-semibold text-white flex items-center">
+                  <BookOpen className="mr-2 text-netflix-accent" size={20} />
+                  Assistente de Busca
+                </h3>
                 
-                {/* Conversation history */}
-                <div className="bg-netflix-card p-4 rounded-md max-h-[40vh] overflow-y-auto space-y-4">
+                {/* Conversation history - Improved styling */}
+                <div className="bg-netflix-card rounded-lg p-4 max-h-[40vh] overflow-y-auto space-y-4 border border-netflix-cardHover">
                   {aiConversation.map((message, idx) => (
                     <div 
                       key={idx} 
                       className={`${
-                        message.startsWith('Assistente:') ? 'text-netflix-accent' : 'text-netflix-text'
+                        message.startsWith('Assistente:') 
+                          ? 'bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in'
+                          : 'bg-netflix-card text-right ml-12 p-2 rounded-lg animate-fade-in'
                       }`}
                     >
-                      {message}
+                      <p className="text-xs text-netflix-secondary mb-1">
+                        {message.startsWith('Assistente:') ? 'Assistente' : 'Você'}
+                      </p>
+                      <p className={message.startsWith('Assistente:') ? 'text-netflix-text' : 'text-sm'}>
+                        {message.replace(/^(Assistente:|Você:)\s/, '')}
+                      </p>
                     </div>
                   ))}
                   
                   {questionIndex < questions.length && currentQuestion && (
-                    <div className="text-netflix-accent">
-                      Assistente: {currentQuestion}
+                    <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
+                      <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
+                      <p className="text-netflix-text">{currentQuestion}</p>
                     </div>
                   )}
                 </div>
@@ -209,7 +220,7 @@ const AISearchBar: React.FC = () => {
                       placeholder="Sua resposta..."
                       value={aiQuery}
                       onChange={(e) => setAiQuery(e.target.value)}
-                      className="flex-grow"
+                      className="flex-grow bg-netflix-card border-netflix-cardHover"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && aiQuery.trim()) {
                           e.preventDefault();
@@ -220,25 +231,35 @@ const AISearchBar: React.FC = () => {
                     <Button 
                       disabled={!aiQuery.trim() || isSearching}
                       onClick={() => handleNextQuestion(aiQuery)}
+                      className="bg-netflix-accent hover:bg-[#c11119]"
                     >
                       {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
                     </Button>
                   </div>
                 )}
                 
-                {/* Matched books */}
+                {/* Matched books - Improved card display */}
                 {matchedBooks.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Livros recomendados:</h4>
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-white">Livros recomendados:</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                       {matchedBooks.map((book) => (
                         <div 
                           key={book.id}
                           onClick={() => handleBookClick(book)}
-                          className="cursor-pointer hover:bg-netflix-cardHover transition-colors p-2 rounded-md"
+                          className="cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:scale-105"
                         >
-                          <h5 className="font-medium text-netflix-accent">{book.livro}</h5>
-                          <p className="text-sm text-netflix-secondary">{book.area}</p>
+                          <div className="h-40 overflow-hidden">
+                            <img 
+                              src={book.imagem} 
+                              alt={book.livro} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
+                            <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
