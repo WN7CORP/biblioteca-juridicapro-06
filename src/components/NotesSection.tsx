@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface NotesSectionProps {
-  bookId: string;
+  bookId: number;
 }
 
 const NotesSection: React.FC<NotesSectionProps> = ({ bookId }) => {

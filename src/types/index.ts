@@ -1,6 +1,6 @@
 
 export interface Book {
-  id: string;
+  id: number;
   area: string;
   livro: string;
   link: string;
@@ -8,11 +8,13 @@ export interface Book {
   sobre: string;
   download: string;
   favorito?: boolean;
+  progresso?: number;
+  created_at?: string;
 }
 
 export interface Note {
   id: string;
-  bookId: string;
+  bookId: number;
   content: string;
   createdAt: Date;
 }

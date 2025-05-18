@@ -9,7 +9,10 @@ const ReadBook = () => {
   const { books } = useLibrary();
   const navigate = useNavigate();
 
-  const book = books.find(b => b.id === bookId);
+  // Convert the string parameter to a number to match our updated Book type
+  const numericBookId = bookId ? parseInt(bookId) : undefined;
+  
+  const book = numericBookId ? books.find(b => b.id === numericBookId) : undefined;
 
   useEffect(() => {
     if (!book) {

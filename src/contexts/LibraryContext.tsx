@@ -15,10 +15,10 @@ interface LibraryContextProps {
   setSelectedArea: (area: string | null) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  toggleFavorite: (bookId: string) => void;
-  addNote: (bookId: string, content: string) => void;
+  toggleFavorite: (bookId: number) => void;
+  addNote: (bookId: number, content: string) => void;
   deleteNote: (noteId: string) => void;
-  getNotesByBook: (bookId: string) => Note[];
+  getNotesByBook: (bookId: number) => Note[];
 }
 
 const LibraryContext = createContext<LibraryContextProps>({} as LibraryContextProps);
@@ -88,7 +88,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return [];
       }
       
-      return data.map(fav => fav.book_id);
+      return data.map(fav => Number(fav.book_id));
     },
     enabled: !!userIp,
   });
@@ -111,7 +111,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       return data.map(note => ({
         id: note.id,
-        bookId: note.book_id.toString(),
+        bookId: Number(note.book_id),
         content: note.note_text,
         createdAt: new Date(note.created_at),
       })) as Note[];
@@ -121,7 +121,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   // Toggle favorite mutation
   const toggleFavoriteMutation = useMutation({
-    mutationFn: async (bookId: string) => {
+    mutationFn: async (bookId: number) => {
       const isFavorite = favorites.includes(bookId);
       
       if (isFavorite) {
@@ -159,7 +159,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Add note mutation
   const addNoteMutation = useMutation({
-    mutationFn: async ({ bookId, content }: { bookId: string, content: string }) => {
+    mutationFn: async ({ bookId, content }: { bookId: number, content: string }) => {
       const { data, error } = await supabase
         .from('book_notes')
         .insert([
@@ -207,7 +207,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Enhanced books with favorite status
   const enhancedBooks = books.map(book => ({
     ...book,
-    favorito: favorites.includes(book.id.toString())
+    favorito: favorites.includes(book.id)
   }));
 
   // Filter books based on selected area and search term
@@ -223,7 +223,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const favoriteBooks = enhancedBooks.filter(book => book.favorito);
 
   // Toggle favorite status
-  const toggleFavorite = (bookId: string) => {
+  const toggleFavorite = (bookId: number) => {
     toggleFavoriteMutation.mutate(bookId);
     
     const book = books.find(b => b.id === bookId);
@@ -237,7 +237,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Add a note
-  const addNote = (bookId: string, content: string) => {
+  const addNote = (bookId: number, content: string) => {
     addNoteMutation.mutate({ bookId, content });
     toast({
       title: "Nota adicionada",
@@ -255,7 +255,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Get notes by book ID
-  const getNotesByBook = (bookId: string) => {
+  const getNotesByBook = (bookId: number) => {
     return notes.filter(note => note.bookId === bookId);
   };
 
