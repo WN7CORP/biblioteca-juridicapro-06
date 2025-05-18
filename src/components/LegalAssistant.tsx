@@ -126,6 +126,25 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
     handleFetchAssistant('qa');
   };
 
+  // Define the common markdown component styles
+  const markdownComponents = {
+    // Add custom components for the markdown renderer
+    h1: ({ node, ...props }) => <h1 {...props} className="text-xl font-bold text-netflix-accent mb-4" />,
+    h2: ({ node, ...props }) => <h2 {...props} className="text-lg font-bold text-netflix-accent mb-3" />,
+    h3: ({ node, ...props }) => <h3 {...props} className="text-md font-bold text-netflix-accent mb-2" />,
+    p: ({ node, ...props }) => <p {...props} className="mb-4 text-netflix-text" />,
+    ul: ({ node, ...props }) => <ul {...props} className="list-disc pl-5 mb-4" />,
+    ol: ({ node, ...props }) => <ol {...props} className="list-decimal pl-5 mb-4" />,
+    li: ({ node, ...props }) => <li {...props} className="mb-1" />,
+    a: ({ node, ...props }) => <a {...props} className="text-blue-400 hover:underline" />,
+    blockquote: ({ node, ...props }) => <blockquote {...props} className="border-l-4 border-netflix-accent pl-4 italic my-4" />,
+    code: ({ node, inline, ...props }) => (
+      inline 
+        ? <code {...props} className="bg-netflix-card px-1 py-0.5 rounded text-sm" />
+        : <pre className="bg-netflix-card p-4 rounded-md overflow-x-auto my-4"><code {...props} /></pre>
+    )
+  };
+
   return (
     <>
       <button
@@ -173,14 +192,14 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                   </div>
                 ) : isTyping ? (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText}
                     </ReactMarkdown>
                     <TypingAnimation />
                   </div>
                 ) : (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText || 'Gerando resumo...'}
                     </ReactMarkdown>
                   </div>
@@ -194,14 +213,14 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                   </div>
                 ) : isTyping ? (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText}
                     </ReactMarkdown>
                     <TypingAnimation />
                   </div>
                 ) : (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText || 'Gerando mapa mental...'}
                     </ReactMarkdown>
                   </div>
@@ -230,14 +249,14 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                   </div>
                 ) : isTyping && displayText ? (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText}
                     </ReactMarkdown>
                     <TypingAnimation />
                   </div>
                 ) : displayText ? (
                   <div className="p-4 rounded bg-netflix-card">
-                    <ReactMarkdown className="prose prose-invert max-w-none prose-headings:text-netflix-accent prose-a:text-blue-400">
+                    <ReactMarkdown components={markdownComponents}>
                       {displayText}
                     </ReactMarkdown>
                   </div>
