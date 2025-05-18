@@ -3,7 +3,7 @@ import { Book, Note } from "../types";
 
 export const mockBooks: Book[] = [
   {
-    id: "1",
+    id: 1,
     area: "Direito Civil",
     livro: "Código Civil Comentado",
     link: "https://drive.google.com/file/d/example1/preview",
@@ -13,7 +13,7 @@ export const mockBooks: Book[] = [
     favorito: false
   },
   {
-    id: "2",
+    id: 2,
     area: "Direito Constitucional",
     livro: "Constituição Federal Anotada",
     link: "https://drive.google.com/file/d/example2/preview",
@@ -23,7 +23,7 @@ export const mockBooks: Book[] = [
     favorito: true
   },
   {
-    id: "3",
+    id: 3,
     area: "Direito Penal",
     livro: "Manual de Direito Penal",
     link: "https://drive.google.com/file/d/example3/preview",
@@ -33,7 +33,7 @@ export const mockBooks: Book[] = [
     favorito: false
   },
   {
-    id: "4",
+    id: 4,
     area: "Direito do Trabalho",
     livro: "CLT Interpretada",
     link: "https://drive.google.com/file/d/example4/preview",
@@ -43,7 +43,7 @@ export const mockBooks: Book[] = [
     favorito: false
   },
   {
-    id: "5",
+    id: 5,
     area: "Direito Administrativo",
     livro: "Direito Administrativo Contemporâneo",
     link: "https://drive.google.com/file/d/example5/preview",
@@ -53,7 +53,7 @@ export const mockBooks: Book[] = [
     favorito: false
   },
   {
-    id: "6",
+    id: 6,
     area: "Direito Tributário",
     livro: "Sistema Tributário Nacional",
     link: "https://drive.google.com/file/d/example6/preview",
@@ -67,13 +67,13 @@ export const mockBooks: Book[] = [
 export const mockNotes: Note[] = [
   {
     id: "1",
-    bookId: "2",
+    bookId: 2,
     content: "Importante para concurso: artigo 5º e suas garantias fundamentais.",
     createdAt: new Date("2023-09-15")
   },
   {
     id: "2",
-    bookId: "6",
+    bookId: 6,
     content: "Revisar capítulo sobre tributos federais para a prova da OAB.",
     createdAt: new Date("2023-10-02")
   }
