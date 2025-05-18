@@ -60,34 +60,41 @@ const AISearchBar: React.FC = () => {
   }
 
   const handleNextQuestion = async (response: string) => {
-    // Prevent duplicate questions by checking if we've already added the response
-    const newConversation = [...aiConversation];
+    if (!response.trim()) return; // Ignore empty responses
     
-    // Only add the user's response if it's not already the last item
-    if (newConversation.length === 0 || !newConversation[newConversation.length - 1].startsWith(`Você: ${response}`)) {
-      newConversation.push(`Você: ${response}`);
+    setIsSearching(true);
+    
+    // Create a new conversation array and add user's response
+    const newConversation = [...aiConversation];
+    const userMessage = `Você: ${response}`;
+    
+    // Prevent duplicates by checking if the last message is the same
+    if (newConversation.length === 0 || newConversation[newConversation.length - 1] !== userMessage) {
+      newConversation.push(userMessage);
       setAiConversation(newConversation);
     }
     
-    setIsSearching(true);
     setIsTyping(true);
     
     // Simulate AI thinking delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
     if (questionIndex < questions.length - 1) {
-      // Still have more questions to ask
+      // Move to next question
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
       
-      // Check if this assistant message is already in the conversation
+      // Add the assistant's next question
       const assistantMessage = `Assistente: ${questions[nextIndex]}`;
-      if (!newConversation.some(msg => msg === assistantMessage)) {
-        setAiConversation([...newConversation, assistantMessage]);
+      
+      // Check if this message is already in conversation to prevent duplicates
+      if (!newConversation.includes(assistantMessage)) {
+        newConversation.push(assistantMessage);
+        setAiConversation(newConversation);
       }
     } else {
       // Final question answered, search for books
-      const allResponses = [...aiConversation, response].join(' ');
+      const allResponses = [...aiConversation.map(m => m.replace(/^(Você:|Assistente:)\s/, "")), response].join(' ');
       await searchBooks(allResponses);
     }
     
@@ -300,7 +307,7 @@ const AISearchBar: React.FC = () => {
                   )}
                   
                   {/* Conversation history in a scrollable area with improved scrolling */}
-                  <ScrollArea className="flex-1 min-h-0 h-full w-full overflow-y-auto pr-2">
+                  <ScrollArea className="flex-1 min-h-0 h-full w-full pr-2" style={{ overflow: 'auto' }}>
                     <div className="space-y-4 pb-4">
                       {aiConversation.map((message, idx) => (
                         <div 
