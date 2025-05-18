@@ -1,1 +1,5 @@
+
 project_id = "yovocuutiwwmbempxcyo"
+
+[functions.track-book-progress]
+verify_jwt = false

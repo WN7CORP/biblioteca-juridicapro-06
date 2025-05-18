@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book, Note } from '../types';
 import { mockBooks, mockNotes } from '../data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface LibraryContextProps {
   books: Book[];
@@ -24,14 +26,192 @@ const LibraryContext = createContext<LibraryContextProps>({} as LibraryContextPr
 export const useLibrary = () => useContext(LibraryContext);
 
 export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(mockBooks);
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Get user IP for tracking favorites and notes (simple approach)
+  const [userIp, setUserIp] = useState<string>('');
+  
+  useEffect(() => {
+    // Get a unique identifier for this user/browser
+    const getUniqueId = async () => {
+      const storedId = localStorage.getItem('bibjuridica_user_id');
+      if (storedId) {
+        setUserIp(storedId);
+      } else {
+        const randomId = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('bibjuridica_user_id', randomId);
+        setUserIp(randomId);
+      }
+    };
+    
+    getUniqueId();
+  }, []);
+
+  // Fetch books from Supabase
+  const { data: books = [] } = useQuery({
+    queryKey: ['books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('biblioteca_juridica')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching books:', error);
+        toast({
+          title: "Erro ao carregar livros",
+          description: "Não foi possível carregar os livros. Tente novamente mais tarde.",
+        });
+        return mockBooks; // Fallback to mock data if there's an error
+      }
+      
+      return data as Book[];
+    },
+    enabled: true,
+  });
+  
+  // Fetch user favorites
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites', userIp],
+    queryFn: async () => {
+      if (!userIp) return [];
+      
+      const { data, error } = await supabase
+        .from('book_favorites')
+        .select('book_id')
+        .eq('user_ip', userIp);
+      
+      if (error) {
+        console.error('Error fetching favorites:', error);
+        return [];
+      }
+      
+      return data.map(fav => fav.book_id);
+    },
+    enabled: !!userIp,
+  });
+  
+  // Fetch user notes
+  const { data: notes = [] } = useQuery({
+    queryKey: ['notes', userIp],
+    queryFn: async () => {
+      if (!userIp) return mockNotes;
+      
+      const { data, error } = await supabase
+        .from('book_notes')
+        .select('*')
+        .eq('user_ip', userIp);
+      
+      if (error) {
+        console.error('Error fetching notes:', error);
+        return mockNotes;
+      }
+      
+      return data.map(note => ({
+        id: note.id,
+        bookId: note.book_id.toString(),
+        content: note.note_text,
+        createdAt: new Date(note.created_at),
+      })) as Note[];
+    },
+    enabled: !!userIp,
+  });
+  
+  // Toggle favorite mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (bookId: string) => {
+      const isFavorite = favorites.includes(bookId);
+      
+      if (isFavorite) {
+        // Remove from favorites
+        const { error } = await supabase
+          .from('book_favorites')
+          .delete()
+          .eq('book_id', bookId)
+          .eq('user_ip', userIp);
+          
+        if (error) throw new Error(error.message);
+      } else {
+        // Add to favorites
+        const { error } = await supabase
+          .from('book_favorites')
+          .insert([
+            { book_id: bookId, user_ip: userIp }
+          ]);
+          
+        if (error) throw new Error(error.message);
+      }
+      
+      return { bookId, isFavorite: !isFavorite };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites', userIp] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar favoritos",
+        description: error.message,
+      });
+    }
+  });
+
+  // Add note mutation
+  const addNoteMutation = useMutation({
+    mutationFn: async ({ bookId, content }: { bookId: string, content: string }) => {
+      const { data, error } = await supabase
+        .from('book_notes')
+        .insert([
+          { book_id: bookId, note_text: content, user_ip: userIp }
+        ])
+        .select();
+        
+      if (error) throw new Error(error.message);
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', userIp] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao adicionar nota",
+        description: error.message,
+      });
+    }
+  });
+  
+  // Delete note mutation
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from('book_notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('user_ip', userIp);
+        
+      if (error) throw new Error(error.message);
+      return noteId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', userIp] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir nota",
+        description: error.message,
+      });
+    }
+  });
+
+  // Enhanced books with favorite status
+  const enhancedBooks = books.map(book => ({
+    ...book,
+    favorito: favorites.includes(book.id.toString())
+  }));
 
   // Filter books based on selected area and search term
-  const filteredBooks = books.filter(book => {
+  const filteredBooks = enhancedBooks.filter(book => {
     const matchesArea = selectedArea ? book.area === selectedArea : true;
     const matchesSearch = searchTerm
       ? book.livro.toLowerCase().includes(searchTerm.toLowerCase()) || book.area.toLowerCase().includes(searchTerm.toLowerCase())
@@ -40,20 +220,17 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   // Get favorite books
-  const favoriteBooks = books.filter(book => book.favorito);
+  const favoriteBooks = enhancedBooks.filter(book => book.favorito);
 
   // Toggle favorite status
   const toggleFavorite = (bookId: string) => {
-    setBooks(prevBooks => 
-      prevBooks.map(book => 
-        book.id === bookId ? { ...book, favorito: !book.favorito } : book
-      )
-    );
+    toggleFavoriteMutation.mutate(bookId);
     
     const book = books.find(b => b.id === bookId);
     if (book) {
+      const isFavorite = favorites.includes(bookId);
       toast({
-        title: book.favorito ? "Removido dos favoritos" : "Adicionado aos favoritos",
+        title: isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
         description: book.livro,
       });
     }
@@ -61,13 +238,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Add a note
   const addNote = (bookId: string, content: string) => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      bookId,
-      content,
-      createdAt: new Date()
-    };
-    setNotes(prevNotes => [...prevNotes, newNote]);
+    addNoteMutation.mutate({ bookId, content });
     toast({
       title: "Nota adicionada",
       description: "Sua anotação foi salva com sucesso.",
@@ -76,7 +247,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Delete a note
   const deleteNote = (noteId: string) => {
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
+    deleteNoteMutation.mutate(noteId);
     toast({
       title: "Nota excluída",
       description: "Sua anotação foi removida com sucesso.",
@@ -91,7 +262,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <LibraryContext.Provider
       value={{
-        books,
+        books: enhancedBooks,
         notes,
         filteredBooks,
         favoriteBooks,
