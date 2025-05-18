@@ -25,9 +25,9 @@ const ReadBook = () => {
     return null;
   }
 
-  // Fixed back button handler to work correctly with single click
+  // Simplified back button handler that will definitely navigate back with one click
   const handleGoBack = () => {
-    navigate(-1);
+    navigate('/');
   };
 
   return (

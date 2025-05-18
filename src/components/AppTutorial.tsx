@@ -22,23 +22,23 @@ const AppTutorial: React.FC<AppTutorialProps> = ({ isFirstVisit }) => {
           {
             element: '[data-intro="welcome"]',
             intro: 'Bem-vindo à Biblioteca Jurídica! Este tutorial rápido vai te ajudar a conhecer as principais funcionalidades do app.',
-            position: 'center',
+            position: 'bottom' // Changed from 'center' to 'bottom' to fix type error
           },
           {
             element: '[data-intro="navigation"]',
-            intro: 'Use esta barra de navegação para acessar as principais áreas do aplicativo.',
+            intro: 'Use esta barra de navegação para acessar as principais áreas do aplicativo.'
           },
           {
             element: '[data-intro="search"]',
-            intro: 'Utilize nossa pesquisa com IA para encontrar livros jurídicos facilmente.',
+            intro: 'Utilize nossa pesquisa com IA para encontrar livros jurídicos facilmente.'
           },
           {
             element: '[data-intro="areas"]',
-            intro: 'Navegue por áreas do Direito para encontrar livros específicos.',
+            intro: 'Navegue por áreas do Direito para encontrar livros específicos.'
           },
           {
             element: '[data-intro="faq"]',
-            intro: 'Confira nossa seção de perguntas frequentes para esclarecer suas dúvidas.',
+            intro: 'Confira nossa seção de perguntas frequentes para esclarecer suas dúvidas.'
           },
         ],
         doneLabel: 'Concluir',
