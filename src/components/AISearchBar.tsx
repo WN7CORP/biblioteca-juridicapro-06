@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Book } from '@/types';
 import { Drawer, DrawerContent, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import BookCard from '@/components/BookCard';
+import BookDetailsModal from '@/components/BookDetailsModal';
 
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
@@ -19,6 +20,8 @@ const AISearchBar: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<string>('');
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [showBookModal, setShowBookModal] = useState(false);
   const { books, setSelectedArea, setSearchTerm } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -118,8 +121,20 @@ const AISearchBar: React.FC = () => {
   };
 
   const handleBookClick = (book: Book) => {
+    setSelectedBook(book);
+    setShowBookModal(true);
+  };
+
+  const closeBookModal = () => {
+    setSelectedBook(null);
+    setShowBookModal(false);
+  };
+
+  const handleBookSelection = (book: Book) => {
     // Close drawer
     setIsDrawerOpen(false);
+    setShowBookModal(false);
+    
     // Reset states
     setSelectedArea(null);
     setSearchTerm('');
@@ -178,7 +193,7 @@ const AISearchBar: React.FC = () => {
               </div>
             </DrawerTrigger>
             
-            <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover">
+            <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover overflow-auto">
               <div className="p-4 space-y-4">
                 <h3 className="text-lg font-semibold text-white flex items-center">
                   <BookOpen className="mr-2 text-netflix-accent" size={20} />
@@ -187,9 +202,12 @@ const AISearchBar: React.FC = () => {
                 
                 {/* Book recommendations - Show at the top when available */}
                 {matchedBooks.length > 0 && (
-                  <div className="space-y-4 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
-                    <h4 className="font-medium text-white text-lg">Livros Recomendados</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
+                    <h4 className="font-medium text-white text-lg mb-2">Livros Recomendados</h4>
+                    <p className="text-sm text-netflix-text mb-3">
+                      Com base nas suas respostas, selecionei os seguintes materiais que podem ajudar no seu estudo:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-x-auto">
                       {matchedBooks.map((book) => (
                         <div 
                           key={book.id}
@@ -295,6 +313,13 @@ const AISearchBar: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-netflix-secondary" size={16} />
         </div>
       )}
+      
+      {/* Book details modal for recommended books */}
+      <BookDetailsModal 
+        book={selectedBook} 
+        isOpen={showBookModal} 
+        onClose={closeBookModal} 
+      />
     </div>
   );
 };
