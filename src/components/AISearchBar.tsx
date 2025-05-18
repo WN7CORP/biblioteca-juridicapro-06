@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, BookOpen, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Book } from '@/types';
 import { Drawer, DrawerContent, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
-import BookCard from '@/components/BookCard';
 import BookDetailsModal from '@/components/BookDetailsModal';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
@@ -22,9 +22,11 @@ const AISearchBar: React.FC = () => {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const { books, setSelectedArea, setSearchTerm } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Define guided questions for the AI search
   const questions = [
@@ -38,6 +40,13 @@ const AISearchBar: React.FC = () => {
       setCurrentQuestion(questions[questionIndex]);
     }
   }, [questionIndex]);
+
+  // Scroll to the end of conversation when it updates
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [aiConversation]);
 
   const startAISearch = () => {
     setShowAISearch(true);
@@ -53,6 +62,7 @@ const AISearchBar: React.FC = () => {
     setAiConversation(newConversation);
     
     setIsSearching(true);
+    setIsTyping(true);
     
     // Simulate AI thinking delay
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -69,12 +79,12 @@ const AISearchBar: React.FC = () => {
     }
     
     setIsSearching(false);
+    setIsTyping(false);
     setAiQuery('');
   };
 
   const searchBooks = async (query: string) => {
     // This is a simplified AI matching function
-    // In a real implementation, this would call an edge function with a more sophisticated algorithm
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -193,102 +203,117 @@ const AISearchBar: React.FC = () => {
               </div>
             </DrawerTrigger>
             
-            <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover overflow-auto">
-              <div className="p-4 space-y-4">
-                <h3 className="text-lg font-semibold text-white flex items-center">
-                  <BookOpen className="mr-2 text-netflix-accent" size={20} />
-                  Assistente de Busca
-                </h3>
-                
-                {/* Book recommendations - Show at the top when available */}
-                {matchedBooks.length > 0 && (
-                  <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
-                    <h4 className="font-medium text-white text-lg mb-2">Livros Recomendados</h4>
-                    <p className="text-sm text-netflix-text mb-3">
-                      Com base nas suas respostas, selecionei os seguintes materiais que podem ajudar no seu estudo:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-x-auto">
-                      {matchedBooks.map((book) => (
+            <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover">
+              <div className="flex flex-col h-[80vh] max-h-[80vh]">
+                <div className="p-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+                  <h3 className="text-lg font-semibold text-white flex items-center">
+                    <BookOpen className="mr-2 text-netflix-accent" size={20} />
+                    Assistente de Busca
+                  </h3>
+                  
+                  {/* Book recommendations - Show at the top when available with animation */}
+                  {matchedBooks.length > 0 && (
+                    <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-book-entrance">
+                      <h4 className="font-medium text-white text-lg mb-2">Livros Recomendados</h4>
+                      <p className="text-sm text-netflix-text mb-3">
+                        Com base nas suas respostas, selecionei os seguintes materiais que podem ajudar no seu estudo:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-x-auto">
+                        {matchedBooks.map((book, idx) => (
+                          <div 
+                            key={book.id}
+                            onClick={() => handleBookClick(book)}
+                            className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex"
+                            style={{ animationDelay: `${idx * 100}ms` }}
+                          >
+                            <div className="w-1/3 overflow-hidden">
+                              <img 
+                                src={book.imagem} 
+                                alt={book.livro} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="p-3 flex-grow flex flex-col">
+                              <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
+                              <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                              <p className="text-xs mt-2 line-clamp-2 text-netflix-text flex-grow">
+                                {book.sobre || 'Material didático recomendado para seu estudo.'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Conversation history in a scrollable area */}
+                  <ScrollArea className="flex-1 min-h-0 pr-2">
+                    <div className="space-y-4 pb-4">
+                      {aiConversation.map((message, idx) => (
                         <div 
-                          key={book.id}
-                          onClick={() => handleBookClick(book)}
-                          className="cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex flex-col"
+                          key={idx} 
+                          className={`${
+                            message.startsWith('Assistente:') 
+                              ? 'bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in'
+                              : 'bg-netflix-card text-right ml-12 p-2 rounded-lg animate-fade-in'
+                          }`}
                         >
-                          <div className="h-40 overflow-hidden">
-                            <img 
-                              src={book.imagem} 
-                              alt={book.livro} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="p-3 flex-grow flex flex-col">
-                            <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
-                            <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
-                            <p className="text-xs mt-2 line-clamp-2 text-netflix-text flex-grow">
-                              {book.sobre || 'Material didático recomendado para seu estudo.'}
-                            </p>
-                          </div>
+                          <p className="text-xs text-netflix-secondary mb-1">
+                            {message.startsWith('Assistente:') ? 'Assistente' : 'Você'}
+                          </p>
+                          <p className={message.startsWith('Assistente:') ? 'text-netflix-text' : 'text-sm'}>
+                            {message.replace(/^(Assistente:|Você:)\s/, '')}
+                          </p>
                         </div>
                       ))}
+                      
+                      {questionIndex < questions.length && currentQuestion && !isTyping && (
+                        <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
+                          <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
+                          <p className="text-netflix-text">{currentQuestion}</p>
+                        </div>
+                      )}
+                      
+                      {isTyping && (
+                        <div className="typing-indicator ml-2 my-2">
+                          <span className="dot"></span>
+                          <span className="dot"></span>
+                          <span className="dot"></span>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
                     </div>
-                  </div>
-                )}
-                
-                {/* Conversation history - Improved styling */}
-                <div className="bg-netflix-card rounded-lg p-4 max-h-[40vh] overflow-y-auto space-y-4 border border-netflix-cardHover">
-                  {aiConversation.map((message, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`${
-                        message.startsWith('Assistente:') 
-                          ? 'bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in'
-                          : 'bg-netflix-card text-right ml-12 p-2 rounded-lg animate-fade-in'
-                      }`}
-                    >
-                      <p className="text-xs text-netflix-secondary mb-1">
-                        {message.startsWith('Assistente:') ? 'Assistente' : 'Você'}
-                      </p>
-                      <p className={message.startsWith('Assistente:') ? 'text-netflix-text' : 'text-sm'}>
-                        {message.replace(/^(Assistente:|Você:)\s/, '')}
-                      </p>
-                    </div>
-                  ))}
+                  </ScrollArea>
                   
-                  {questionIndex < questions.length && currentQuestion && (
-                    <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
-                      <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
-                      <p className="text-netflix-text">{currentQuestion}</p>
+                  {/* Input area */}
+                  {(questionIndex < questions.length || isTyping) && (
+                    <div className="flex gap-2 mt-4">
+                      <Input
+                        type="text"
+                        placeholder="Sua resposta..."
+                        value={aiQuery}
+                        onChange={(e) => setAiQuery(e.target.value)}
+                        className="flex-grow bg-netflix-card border-netflix-cardHover"
+                        disabled={isTyping || isSearching}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && aiQuery.trim() && !isTyping && !isSearching) {
+                            e.preventDefault();
+                            handleNextQuestion(aiQuery);
+                          }
+                        }}
+                      />
+                      <Button 
+                        disabled={!aiQuery.trim() || isSearching || isTyping}
+                        onClick={() => handleNextQuestion(aiQuery)}
+                        className="bg-netflix-accent hover:bg-[#c11119]"
+                      >
+                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
+                      </Button>
                     </div>
                   )}
                 </div>
                 
-                {/* Input area */}
-                {questionIndex < questions.length && (
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Sua resposta..."
-                      value={aiQuery}
-                      onChange={(e) => setAiQuery(e.target.value)}
-                      className="flex-grow bg-netflix-card border-netflix-cardHover"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && aiQuery.trim()) {
-                          e.preventDefault();
-                          handleNextQuestion(aiQuery);
-                        }
-                      }}
-                    />
-                    <Button 
-                      disabled={!aiQuery.trim() || isSearching}
-                      onClick={() => handleNextQuestion(aiQuery)}
-                      className="bg-netflix-accent hover:bg-[#c11119]"
-                    >
-                      {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
-                    </Button>
-                  </div>
-                )}
-                
-                <div className="flex justify-end mt-4">
+                <div className="flex justify-end p-4 border-t border-netflix-cardHover">
                   <DrawerClose asChild>
                     <Button variant="outline">Fechar</Button>
                   </DrawerClose>
@@ -320,6 +345,68 @@ const AISearchBar: React.FC = () => {
         isOpen={showBookModal} 
         onClose={closeBookModal} 
       />
+      
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+          }
+          
+          .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #e50914;
+            margin-right: 4px;
+            animation: pulse 1.4s infinite ease-in-out;
+          }
+          
+          .dot:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+          
+          .dot:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+          
+          @keyframes pulse {
+            0%, 50%, 100% { transform: scale(1); opacity: 1; }
+            25%, 75% { transform: scale(0.8); opacity: 0.6; }
+          }
+          
+          @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+          }
+          
+          @keyframes book-entrance {
+            0% { opacity: 0; transform: translateY(-20px); }
+            60% { transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-book-entrance {
+            animation: book-entrance 0.6s ease-out forwards;
+          }
+          
+          .book-card {
+            animation: book-zoom-in 0.5s ease-out forwards;
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          
+          @keyframes book-zoom-in {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+        `
+      }} />
     </div>
   );
 };

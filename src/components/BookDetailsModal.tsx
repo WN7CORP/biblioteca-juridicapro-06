@@ -30,12 +30,12 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="bg-netflix-background border-netflix-cardHover max-w-md p-0 overflow-hidden">
+      <DialogContent className="bg-netflix-background border-netflix-cardHover max-w-md p-0 overflow-hidden animate-dialog-entry">
         <div className="relative">
           <img 
             src={book.imagem} 
             alt={book.livro} 
-            className="w-full h-[200px] object-cover"
+            className="w-full h-[200px] object-cover" 
           />
           <button 
             onClick={onClose} 
@@ -43,10 +43,11 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
           >
             <X size={20} className="text-white" />
           </button>
+          <div className="absolute inset-0 bg-gradient-to-t from-netflix-background to-transparent"></div>
         </div>
         
-        <div className="p-5">
-          <h2 className="text-xl font-bold mb-1">{book.livro}</h2>
+        <div className="p-5 -mt-10 relative">
+          <h2 className="text-xl font-bold mb-1 drop-shadow-lg">{book.livro}</h2>
           <p className="text-sm text-netflix-accent mb-4">{book.area}</p>
           
           <p className="text-sm text-netflix-text mb-6">{book.sobre}</p>
@@ -55,7 +56,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
             <Button 
               variant="default" 
               onClick={handleRead}
-              className="bg-netflix-accent hover:bg-[#c11119] text-white flex items-center justify-center gap-2"
+              className="bg-netflix-accent hover:bg-[#c11119] text-white flex items-center justify-center gap-2 hover:scale-105 transition-transform"
             >
               <BookOpen size={18} />
               <span>Ler</span>
@@ -64,7 +65,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
             <Button 
               variant="outline" 
               onClick={handleDownload}
-              className="bg-transparent border-white/20 text-netflix-text hover:bg-netflix-cardHover flex items-center justify-center gap-2"
+              className="bg-transparent border-white/20 text-netflix-text hover:bg-netflix-cardHover flex items-center justify-center gap-2 hover:scale-105 transition-transform"
             >
               <Download size={18} />
               <span>Download</span>
@@ -90,11 +91,24 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
           </Button>
           
           {showNotes && (
-            <div className="mt-4">
+            <div className="mt-4 animate-fade-in">
               <NotesSection bookId={book.id} />
             </div>
           )}
         </div>
+        
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes dialog-entry {
+              0% { opacity: 0; transform: translate(-50%, -48%) scale(0.9); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+            
+            .animate-dialog-entry {
+              animation: dialog-entry 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+          `
+        }} />
       </DialogContent>
     </Dialog>
   );

@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, BookOpen, Network, HelpCircle, Send } from 'lucide-react';
+import { MessageSquare, X, BookOpen, Network, HelpCircle, Send, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +8,8 @@ import { Book } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card } from '@/components/ui/card';
 
 interface LegalAssistantProps {
   book: Book;
@@ -98,7 +99,7 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
     }
   }, [isOpen, book.id, activeTab]);
 
-  // Scroll to bottom of messages
+  // Scroll to bottom of messages when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -162,6 +163,23 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
     }
   };
 
+  // Function to copy content to clipboard
+  const handleCopyContent = (content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      toast({
+        title: "Conteúdo copiado",
+        description: "O texto foi copiado para a área de transferência.",
+      });
+    }).catch(err => {
+      console.error('Erro ao copiar: ', err);
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o texto.",
+        variant: "destructive",
+      });
+    });
+  };
+
   // Function to simulate typing animation
   const typeResponse = (text: string) => {
     setIsTyping(true);
@@ -184,7 +202,10 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
       }
     }, 10); // Adjust speed as needed
     
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      setIsTyping(false);
+    };
   };
 
   const handleFetchAssistant = async (action: ActionType) => {
@@ -344,36 +365,36 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Books recommendation section - will be shown when available */}
-            {matchedBooks.length > 0 && (
-              <div className="mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
-                <h3 className="text-lg font-medium mb-3 text-white">Livros Recomendados</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {matchedBooks.map((book) => (
-                    <div 
-                      key={book.id}
-                      className="bg-netflix-card rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent transition-all duration-300 hover:scale-105"
-                    >
-                      <div className="h-40 overflow-hidden">
-                        <img 
-                          src={book.imagem} 
-                          alt={book.livro} 
-                          className="w-full h-full object-cover"
-                        />
+            <ScrollArea className="flex-1 pr-4">
+              {/* Books recommendation section - will be shown when available */}
+              {matchedBooks.length > 0 && (
+                <div className="mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-scale-in">
+                  <h3 className="text-lg font-medium mb-3 text-white">Livros Recomendados</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {matchedBooks.map((book) => (
+                      <div 
+                        key={book.id}
+                        className="bg-netflix-card rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent transition-all duration-300 hover:scale-105"
+                      >
+                        <div className="h-40 overflow-hidden">
+                          <img 
+                            src={book.imagem} 
+                            alt={book.livro} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <h4 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h4>
+                          <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                          <p className="text-xs mt-1 line-clamp-2">{book.sobre || 'Livro recomendado baseado na sua consulta'}</p>
+                        </div>
                       </div>
-                      <div className="p-3">
-                        <h4 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h4>
-                        <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
-                        <p className="text-xs mt-1 line-clamp-2">{book.sobre || 'Livro recomendado baseado na sua consulta'}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="overflow-y-auto flex-1 mb-4 conversation-container pr-2">
-              <TabsContent value="qa" className="m-0 space-y-4">
+              <TabsContent value="qa" className="m-0 space-y-4 mt-0 data-[state=active]:mt-0">
                 {qaMessages.length > 0 && (
                   <div className="space-y-4 mb-4">
                     {qaMessages.map((msg, index) => (
@@ -402,7 +423,7 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                 )}
               </TabsContent>
 
-              <TabsContent value="summarize" className="m-0 space-y-4">
+              <TabsContent value="summarize" className="m-0 space-y-4 mt-0 data-[state=active]:mt-0">
                 {showConfirmation ? (
                   <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <BookOpen size={40} className="mb-4 text-netflix-accent" />
@@ -435,16 +456,29 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                         className={`${
                           msg.role === 'user' 
                             ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
-                            : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                            : 'relative bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
                         }`}
                       >
                         <p className="text-xs text-netflix-secondary mb-1">
                           {msg.role === 'user' ? 'Você' : 'Assistente'}
                         </p>
                         {msg.role === 'assistant' ? (
-                          <ReactMarkdown components={markdownComponents}>
-                            {msg.content}
-                          </ReactMarkdown>
+                          <>
+                            <ReactMarkdown components={markdownComponents}>
+                              {msg.content}
+                            </ReactMarkdown>
+                            {msg.content.length > 100 && (
+                              <Button
+                                onClick={() => handleCopyContent(msg.content)}
+                                variant="outline"
+                                size="sm"
+                                className="absolute top-4 right-4 p-2 h-auto"
+                                title="Copiar texto"
+                              >
+                                <Copy size={16} />
+                              </Button>
+                            )}
+                          </>
                         ) : (
                           <p className="text-sm">{msg.content}</p>
                         )}
@@ -453,16 +487,9 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                     <div ref={messagesEndRef} />
                   </div>
                 )}
-                {isTyping && (
-                  <div className="typing-indicator ml-2">
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                  </div>
-                )}
               </TabsContent>
 
-              <TabsContent value="mindmap" className="m-0 space-y-4">
+              <TabsContent value="mindmap" className="m-0 space-y-4 mt-0 data-[state=active]:mt-0">
                 {showConfirmation ? (
                   <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <Network size={40} className="mb-4 text-netflix-accent" />
@@ -495,16 +522,29 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                         className={`${
                           msg.role === 'user' 
                             ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
-                            : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                            : 'relative bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
                         }`}
                       >
                         <p className="text-xs text-netflix-secondary mb-1">
                           {msg.role === 'user' ? 'Você' : 'Assistente'}
                         </p>
                         {msg.role === 'assistant' ? (
-                          <ReactMarkdown components={markdownComponents}>
-                            {msg.content}
-                          </ReactMarkdown>
+                          <>
+                            <ReactMarkdown components={markdownComponents}>
+                              {msg.content}
+                            </ReactMarkdown>
+                            {msg.content.length > 100 && (
+                              <Button
+                                onClick={() => handleCopyContent(msg.content)}
+                                variant="outline"
+                                size="sm"
+                                className="absolute top-4 right-4 p-2 h-auto"
+                                title="Copiar texto"
+                              >
+                                <Copy size={16} />
+                              </Button>
+                            )}
+                          </>
                         ) : (
                           <p className="text-sm">{msg.content}</p>
                         )}
@@ -513,15 +553,17 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
                     <div ref={messagesEndRef} />
                   </div>
                 )}
-                {isTyping && (
-                  <div className="typing-indicator ml-2">
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                  </div>
-                )}
               </TabsContent>
-            </div>
+            </ScrollArea>
+            
+            {/* Only show typing indicator when actually typing */}
+            {isTyping && (
+              <div className="typing-indicator ml-2 my-2">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            )}
 
             {activeTab === 'qa' && (
               <div className="relative mt-auto">
@@ -552,7 +594,6 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Fix: Replace the problematic style tag with standard CSS classes */}
       <style dangerouslySetInnerHTML={{
         __html: `
           .typing-indicator {
@@ -592,23 +633,13 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
             animation: fade-in 0.3s ease-out;
           }
           
-          .conversation-container {
-            scrollbar-width: thin;
-            scrollbar-color: #444 #222;
+          @keyframes scale-in {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
           }
           
-          .conversation-container::-webkit-scrollbar {
-            width: 8px;
-          }
-          
-          .conversation-container::-webkit-scrollbar-track {
-            background: #222;
-          }
-          
-          .conversation-container::-webkit-scrollbar-thumb {
-            background-color: #444;
-            border-radius: 6px;
-            border: 2px solid #222;
+          .animate-scale-in {
+            animation: scale-in 0.5s ease-out;
           }
         `
       }} />
