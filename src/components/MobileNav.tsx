@@ -2,18 +2,16 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Heart, FileText, Layers } from 'lucide-react';
-import { 
-  Drawer, 
-  DrawerTrigger, 
-  DrawerContent, 
-  DrawerClose 
-} from "@/components/ui/drawer";
 
 const MobileNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
   
   const navItems = [
     { icon: Home, label: 'Início', path: '/' },
@@ -24,13 +22,15 @@ const MobileNav: React.FC = () => {
   ];
   
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-netflix-background mobile-nav flex justify-around items-center py-3 border-b border-netflix-cardHover">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-netflix-background mobile-nav flex justify-around items-center py-3 border-b border-netflix-cardHover shadow-lg">
       {navItems.map((item) => (
         <button
           key={item.path}
           onClick={() => navigate(item.path)}
-          className={`flex flex-col items-center px-4 py-1 ${
-            isActive(item.path) ? 'text-netflix-accent' : 'text-netflix-secondary'
+          className={`flex flex-col items-center px-2 py-1 ${
+            isActive(item.path) 
+              ? 'text-netflix-accent border-b-2 border-netflix-accent' 
+              : 'text-netflix-secondary'
           }`}
         >
           <item.icon size={18} />

@@ -29,6 +29,7 @@ const App = () => (
             <Route path="/reading" element={<Reading />} />
             <Route path="/annotations" element={<Annotations />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/categories/:areaName" element={<Categories />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

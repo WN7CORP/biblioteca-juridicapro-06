@@ -25,11 +25,17 @@ const ReadBook = () => {
     return null;
   }
 
+  // Improved back button handler with proper navigation
+  const handleGoBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(-1);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-black">
       <div className="flex items-center bg-netflix-background py-3 px-4 shadow-md">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleGoBack}
           className="flex items-center text-netflix-text hover:text-netflix-accent transition-colors"
         >
           <ArrowLeft className="mr-2" size={20} />
@@ -47,7 +53,6 @@ const ReadBook = () => {
         />
       </div>
       
-      {/* Add the Legal Assistant component */}
       <LegalAssistant book={book} />
     </div>
   );
