@@ -30,39 +30,80 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [qaMessages, setQaMessages] = useState<MessageType[]>([]);
+  const [summarizeMessages, setSummarizeMessages] = useState<MessageType[]>([]);
+  const [mindmapMessages, setMindmapMessages] = useState<MessageType[]>([]);
+  const [matchedBooks, setMatchedBooks] = useState<Book[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Get the current messages array based on active tab
+  const getCurrentMessages = () => {
+    switch (activeTab) {
+      case 'qa':
+        return qaMessages;
+      case 'summarize':
+        return summarizeMessages;
+      case 'mindmap':
+        return mindmapMessages;
+      default:
+        return qaMessages;
+    }
+  };
+
+  // Set messages based on active tab
+  const setCurrentMessages = (messages: MessageType[]) => {
+    switch (activeTab) {
+      case 'qa':
+        setQaMessages(messages);
+        break;
+      case 'summarize':
+        setSummarizeMessages(messages);
+        break;
+      case 'mindmap':
+        setMindmapMessages(messages);
+        break;
+    }
+  };
 
   // Load conversation history and add welcome message when component mounts
   useEffect(() => {
     if (isOpen && book) {
-      if (messages.length === 0) {
-        // Add initial welcome message from the assistant
-        const welcomeMessage: MessageType = {
+      // Add initial welcome messages if empty
+      if (qaMessages.length === 0) {
+        setQaMessages([{
           role: 'assistant',
-          content: `Olá! Sou seu assistente jurídico especializado em ${book.area}. Posso te ajudar com:
-          
-- **Perguntas**: Tire suas dúvidas sobre "${book.livro}"
-- **Resumo**: Gere um resumo completo do conteúdo
-- **Mapa Mental**: Visualize os conceitos principais de forma estruturada
-          
-Como posso ajudar você hoje?`,
+          content: `Olá! Estou pronto para responder suas perguntas sobre "${book.livro}". O que você gostaria de saber?`,
           timestamp: new Date()
-        };
-        
-        setMessages([welcomeMessage]);
+        }]);
       }
+      
+      if (summarizeMessages.length === 0) {
+        setSummarizeMessages([{
+          role: 'assistant',
+          content: `Posso criar um resumo completo do livro "${book.livro}". Isso ajudará você a compreender os principais conceitos e pontos-chave da obra.`,
+          timestamp: new Date()
+        }]);
+      }
+      
+      if (mindmapMessages.length === 0) {
+        setMindmapMessages([{
+          role: 'assistant',
+          content: `Posso gerar um mapa mental organizado do conteúdo de "${book.livro}", facilitando a visualização da estrutura e dos conceitos principais do material.`,
+          timestamp: new Date()
+        }]);
+      }
+      
       loadConversationHistory();
     }
-  }, [isOpen, book.id]);
+  }, [isOpen, book.id, activeTab]);
 
   // Scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [qaMessages, summarizeMessages, mindmapMessages, activeTab]);
 
   const loadConversationHistory = async () => {
     try {
@@ -79,29 +120,42 @@ Como posso ajudar você hoje?`,
       if (error) throw new Error(error.message);
       
       if (data && data.length > 0) {
-        const conversationMessages = data.map(item => {
-          const messages: MessageType[] = [];
-          
-          // Add user message
-          messages.push({
+        // Group conversations by interaction type
+        const qaConversation: MessageType[] = [];
+        const summarizeConversation: MessageType[] = [];
+        const mindmapConversation: MessageType[] = [];
+        
+        data.forEach(item => {
+          const userMessage: MessageType = {
             role: 'user',
             content: item.interaction_type === 'qa' ? item.query : `Gerar ${item.interaction_type === 'summarize' ? 'resumo' : 'mapa mental'}`,
             timestamp: new Date(item.created_at)
-          });
+          };
           
-          // Add assistant response
-          if (item.response) {
-            messages.push({
-              role: 'assistant',
-              content: item.response,
-              timestamp: new Date(item.created_at)
-            });
+          const assistantMessage: MessageType = {
+            role: 'assistant',
+            content: item.response || '',
+            timestamp: new Date(item.created_at)
+          };
+          
+          // Add messages to the appropriate conversation
+          switch (item.interaction_type) {
+            case 'qa':
+              qaConversation.push(userMessage, assistantMessage);
+              break;
+            case 'summarize':
+              summarizeConversation.push(userMessage, assistantMessage);
+              break;
+            case 'mindmap':
+              mindmapConversation.push(userMessage, assistantMessage);
+              break;
           }
-          
-          return messages;
-        }).flat();
+        });
         
-        setMessages(conversationMessages);
+        // Only update if we have actual conversations
+        if (qaConversation.length > 0) setQaMessages(qaConversation);
+        if (summarizeConversation.length > 0) setSummarizeMessages(summarizeConversation);
+        if (mindmapConversation.length > 0) setMindmapMessages(mindmapConversation);
       }
     } catch (error) {
       console.error('Erro ao carregar histórico de conversas:', error);
@@ -136,13 +190,17 @@ Como posso ajudar você hoje?`,
   const handleFetchAssistant = async (action: ActionType) => {
     setIsLoading(true);
     
+    // Get current messages array based on active tab
+    const messages = getCurrentMessages();
+    
     // Add user message to conversation
     const userMessage: MessageType = {
       role: 'user',
       content: action === 'qa' ? question : `Gerar ${action === 'summarize' ? 'resumo' : 'mapa mental'}`,
       timestamp: new Date()
     };
-    setMessages(prev => [...prev, userMessage]);
+    
+    setCurrentMessages([...messages, userMessage]);
     
     try {
       // Generate a random IP for demo purposes (in production, you'd use the real user IP)
@@ -171,7 +229,7 @@ Como posso ajudar você hoje?`,
           timestamp: new Date()
         };
         
-        setMessages(prev => [...prev, assistantMessage]);
+        setCurrentMessages([...messages, userMessage, assistantMessage]);
         
         // Animate typing the response
         typeResponse(data.response);
@@ -205,6 +263,7 @@ Como posso ajudar você hoje?`,
     setActiveTab(value as ActionType);
     setResponse('');
     setShowConfirmation(value !== 'qa');
+    setMatchedBooks([]);
   };
 
   const handleQuestionSubmit = () => {
@@ -245,7 +304,7 @@ Como posso ajudar você hoje?`,
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-netflix-accent text-white rounded-full p-3 shadow-lg hover:bg-[#c11119] transition-colors z-50 animate-pulse"
+        className="fixed bottom-6 right-6 bg-netflix-accent text-white rounded-full p-3 shadow-lg hover:bg-[#c11119] transition-colors z-50"
         aria-label="Assistente Jurídico"
       >
         <MessageSquare size={24} />
@@ -285,35 +344,65 @@ Como posso ajudar você hoje?`,
               </TabsTrigger>
             </TabsList>
 
-            <div className="overflow-y-auto flex-1 mb-4 conversation-container pr-2">
-              {messages.length > 0 && (
-                <div className="space-y-4 mb-4">
-                  {messages.map((msg, index) => (
+            {/* Books recommendation section - will be shown when available */}
+            {matchedBooks.length > 0 && (
+              <div className="mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
+                <h3 className="text-lg font-medium mb-3 text-white">Livros Recomendados</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {matchedBooks.map((book) => (
                     <div 
-                      key={index} 
-                      className={`${
-                        msg.role === 'user' 
-                          ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
-                          : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
-                      }`}
+                      key={book.id}
+                      className="bg-netflix-card rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent transition-all duration-300 hover:scale-105"
                     >
-                      <p className="text-xs text-netflix-secondary mb-1">
-                        {msg.role === 'user' ? 'Você' : 'Assistente'}
-                      </p>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown components={markdownComponents}>
-                          {msg.content}
-                        </ReactMarkdown>
-                      ) : (
-                        <p className="text-sm">{msg.content}</p>
-                      )}
+                      <div className="h-40 overflow-hidden">
+                        <img 
+                          src={book.imagem} 
+                          alt={book.livro} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h4>
+                        <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                        <p className="text-xs mt-1 line-clamp-2">{book.sobre || 'Livro recomendado baseado na sua consulta'}</p>
+                      </div>
                     </div>
                   ))}
-                  <div ref={messagesEndRef} />
                 </div>
-              )}
-              
-              <TabsContent value="summarize" className="m-0">
+              </div>
+            )}
+
+            <div className="overflow-y-auto flex-1 mb-4 conversation-container pr-2">
+              <TabsContent value="qa" className="m-0 space-y-4">
+                {qaMessages.length > 0 && (
+                  <div className="space-y-4 mb-4">
+                    {qaMessages.map((msg, index) => (
+                      <div 
+                        key={index} 
+                        className={`${
+                          msg.role === 'user' 
+                            ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
+                            : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                        }`}
+                      >
+                        <p className="text-xs text-netflix-secondary mb-1">
+                          {msg.role === 'user' ? 'Você' : 'Assistente'}
+                        </p>
+                        {msg.role === 'assistant' ? (
+                          <ReactMarkdown components={markdownComponents}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="summarize" className="m-0 space-y-4">
                 {showConfirmation ? (
                   <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <BookOpen size={40} className="mb-4 text-netflix-accent" />
@@ -339,32 +428,41 @@ Como posso ajudar você hoje?`,
                     </div>
                   </div>
                 ) : (
-                  isTyping ? (
-                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
-                      <ReactMarkdown components={markdownComponents}>
-                        {response}
-                      </ReactMarkdown>
-                      <div className="typing-indicator mt-2">
-                        <span className="dot"></span>
-                        <span className="dot"></span>
-                        <span className="dot"></span>
+                  <div className="space-y-4 mb-4">
+                    {summarizeMessages.map((msg, index) => (
+                      <div 
+                        key={index} 
+                        className={`${
+                          msg.role === 'user' 
+                            ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
+                            : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                        }`}
+                      >
+                        <p className="text-xs text-netflix-secondary mb-1">
+                          {msg.role === 'user' ? 'Você' : 'Assistente'}
+                        </p>
+                        {msg.role === 'assistant' ? (
+                          <ReactMarkdown components={markdownComponents}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
                       </div>
-                    </div>
-                  ) : response ? (
-                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
-                      <ReactMarkdown components={markdownComponents}>
-                        {response}
-                      </ReactMarkdown>
-                    </div>
-                  ) : isLoading ? (
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-netflix-accent"></div>
-                    </div>
-                  ) : null
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+                {isTyping && (
+                  <div className="typing-indicator ml-2">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="mindmap" className="m-0">
+              <TabsContent value="mindmap" className="m-0 space-y-4">
                 {showConfirmation ? (
                   <div className="flex flex-col items-center justify-center p-6 text-center bg-[#232323] rounded-lg border border-netflix-cardHover">
                     <Network size={40} className="mb-4 text-netflix-accent" />
@@ -390,67 +488,66 @@ Como posso ajudar você hoje?`,
                     </div>
                   </div>
                 ) : (
-                  isTyping ? (
-                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
-                      <ReactMarkdown components={markdownComponents}>
-                        {response}
-                      </ReactMarkdown>
-                      <div className="typing-indicator mt-2">
-                        <span className="dot"></span>
-                        <span className="dot"></span>
-                        <span className="dot"></span>
+                  <div className="space-y-4 mb-4">
+                    {mindmapMessages.map((msg, index) => (
+                      <div 
+                        key={index} 
+                        className={`${
+                          msg.role === 'user' 
+                            ? 'bg-netflix-card text-right ml-12 animate-fade-in rounded-lg p-3' 
+                            : 'bg-[#232323] mr-12 animate-fade-in rounded-lg p-4 border-l-2 border-netflix-accent'
+                        }`}
+                      >
+                        <p className="text-xs text-netflix-secondary mb-1">
+                          {msg.role === 'user' ? 'Você' : 'Assistente'}
+                        </p>
+                        {msg.role === 'assistant' ? (
+                          <ReactMarkdown components={markdownComponents}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
                       </div>
-                    </div>
-                  ) : response ? (
-                    <div className="whitespace-pre-line p-5 rounded-lg bg-[#232323] border-l-2 border-netflix-accent">
-                      <ReactMarkdown components={markdownComponents}>
-                        {response}
-                      </ReactMarkdown>
-                    </div>
-                  ) : isLoading ? (
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-netflix-accent"></div>
-                    </div>
-                  ) : null
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+                {isTyping && (
+                  <div className="typing-indicator ml-2">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
                 )}
               </TabsContent>
-
-              <TabsContent value="qa" className="m-0">
-                <div className="space-y-4 mt-auto">
-                  <div className="relative">
-                    <Textarea
-                      placeholder="Digite sua pergunta sobre este livro..."
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      className="bg-netflix-card border-netflix-cardHover text-netflix-text resize-none pr-12"
-                      rows={3}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleQuestionSubmit();
-                        }
-                      }}
-                    />
-                    <Button 
-                      onClick={handleQuestionSubmit} 
-                      disabled={isLoading || !question.trim()}
-                      className="absolute bottom-2 right-2 bg-netflix-accent hover:bg-[#c11119] text-white p-2 rounded-full h-auto"
-                      size="icon"
-                    >
-                      <Send size={18} />
-                    </Button>
-                  </div>
-                  
-                  {isTyping && (
-                    <div className="typing-indicator ml-2">
-                      <span className="dot"></span>
-                      <span className="dot"></span>
-                      <span className="dot"></span>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
             </div>
+
+            {activeTab === 'qa' && (
+              <div className="relative mt-auto">
+                <Textarea
+                  placeholder="Digite sua pergunta sobre este livro..."
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="bg-netflix-card border-netflix-cardHover text-netflix-text resize-none pr-12"
+                  rows={3}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleQuestionSubmit();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleQuestionSubmit} 
+                  disabled={isLoading || !question.trim()}
+                  className="absolute bottom-2 right-2 bg-netflix-accent hover:bg-[#c11119] text-white p-2 rounded-full h-auto"
+                  size="icon"
+                >
+                  <Send size={18} />
+                </Button>
+              </div>
+            )}
           </Tabs>
         </DialogContent>
       </Dialog>
@@ -493,10 +590,6 @@ Como posso ajudar você hoje?`,
           
           .animate-fade-in {
             animation: fade-in 0.3s ease-out;
-          }
-          
-          .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
           
           .conversation-container {

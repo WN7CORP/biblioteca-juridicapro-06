@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -184,6 +185,37 @@ const AISearchBar: React.FC = () => {
                   Assistente de Busca
                 </h3>
                 
+                {/* Book recommendations - Show at the top when available */}
+                {matchedBooks.length > 0 && (
+                  <div className="space-y-4 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-fade-in">
+                    <h4 className="font-medium text-white text-lg">Livros Recomendados</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {matchedBooks.map((book) => (
+                        <div 
+                          key={book.id}
+                          onClick={() => handleBookClick(book)}
+                          className="cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex flex-col"
+                        >
+                          <div className="h-40 overflow-hidden">
+                            <img 
+                              src={book.imagem} 
+                              alt={book.livro} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3 flex-grow flex flex-col">
+                            <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
+                            <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                            <p className="text-xs mt-2 line-clamp-2 text-netflix-text flex-grow">
+                              {book.sobre || 'Material didático recomendado para seu estudo.'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Conversation history - Improved styling */}
                 <div className="bg-netflix-card rounded-lg p-4 max-h-[40vh] overflow-y-auto space-y-4 border border-netflix-cardHover">
                   {aiConversation.map((message, idx) => (
@@ -238,34 +270,6 @@ const AISearchBar: React.FC = () => {
                   </div>
                 )}
                 
-                {/* Matched books - Improved card display */}
-                {matchedBooks.length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-white">Livros recomendados:</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                      {matchedBooks.map((book) => (
-                        <div 
-                          key={book.id}
-                          onClick={() => handleBookClick(book)}
-                          className="cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:scale-105"
-                        >
-                          <div className="h-40 overflow-hidden">
-                            <img 
-                              src={book.imagem} 
-                              alt={book.livro} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="p-3">
-                            <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
-                            <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
                 <div className="flex justify-end mt-4">
                   <DrawerClose asChild>
                     <Button variant="outline">Fechar</Button>
@@ -275,7 +279,7 @@ const AISearchBar: React.FC = () => {
             </DrawerContent>
           </Drawer>
           
-          <p className="text-xs text-netflix-accent mt-1 font-semibold animate-pulse">
+          <p className="text-xs text-netflix-accent mt-1 font-semibold">
             Utilize nossa IA para encontrar o material jurídico ideal para você ✨
           </p>
         </div>
