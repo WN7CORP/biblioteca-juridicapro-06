@@ -209,18 +209,20 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
   
   // Markdown components for styling
   const markdownComponents = {
-    h1: ({ node, ...props }: any) => <h1 className="text-xl font-bold mb-3 text-white" {...props} />,
-    h2: ({ node, ...props }: any) => <h2 className="text-lg font-bold mb-2 text-white" {...props} />,
-    h3: ({ node, ...props }: any) => <h3 className="text-md font-bold mb-2 text-white" {...props} />,
-    p: ({ node, ...props }: any) => <p className="mb-2 text-netflix-text" {...props} />,
-    ul: ({ node, ...props }: any) => <ul className="list-disc list-inside mb-2" {...props} />,
-    ol: ({ node, ...props }: any) => <ol className="list-decimal list-inside mb-2" {...props} />,
-    li: ({ node, ...props }: any) => <li className="ml-2 mb-1" {...props} />,
-    blockquote: ({ node, ...props }: any) => <blockquote className="border-l-4 border-netflix-accent pl-2 italic mb-2" {...props} />,
-    code: ({ node, inline, ...props }: any) => 
-      inline 
-        ? <code className="bg-[#333] px-1 rounded text-white font-mono text-sm" {...props} />
-        : <pre className="bg-[#333] p-2 rounded text-white font-mono text-sm overflow-x-auto mb-2"><code {...props} /></pre>
+    h1: (props: any) => <h1 className="text-xl font-bold mb-3 text-white">{props.children}</h1>,
+    h2: (props: any) => <h2 className="text-lg font-bold mb-2 text-white">{props.children}</h2>,
+    h3: (props: any) => <h3 className="text-md font-bold mb-2 text-white">{props.children}</h3>,
+    p: (props: any) => <p className="mb-2 text-netflix-text">{props.children}</p>,
+    ul: (props: any) => <ul className="list-disc list-inside mb-2">{props.children}</ul>,
+    ol: (props: any) => <ol className="list-decimal list-inside mb-2">{props.children}</ol>,
+    li: (props: any) => <li className="ml-2 mb-1">{props.children}</li>,
+    blockquote: (props: any) => <blockquote className="border-l-4 border-netflix-accent pl-2 italic mb-2">{props.children}</blockquote>,
+    code: (props: any) => {
+      const { node, inline, ...rest } = props;
+      return inline 
+        ? <code className="bg-[#333] px-1 rounded text-white font-mono text-sm">{props.children}</code>
+        : <pre className="bg-[#333] p-2 rounded text-white font-mono text-sm overflow-x-auto mb-2"><code {...rest}>{props.children}</code></pre>;
+    }
   };
 
   return (
@@ -431,54 +433,57 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
-        .typing-indicator {
-          display: inline-flex;
-          align-items: center;
-        }
-        
-        .dot {
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #e50914;
-          margin-right: 4px;
-          animation: pulse 1.4s infinite ease-in-out;
-        }
-        
-        .dot:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-        
-        .dot:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-        
-        @keyframes pulse {
-          0%, 50%, 100% { transform: scale(1); opacity: 1; }
-          25%, 75% { transform: scale(0.8); opacity: 0.6; }
-        }
-        
-        .conversation-container {
-          scrollbar-width: thin;
-          scrollbar-color: #444 #222;
-        }
-        
-        .conversation-container::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        .conversation-container::-webkit-scrollbar-track {
-          background: #222;
-        }
-        
-        .conversation-container::-webkit-scrollbar-thumb {
-          background-color: #444;
-          border-radius: 6px;
-          border: 2px solid #222;
-        }
-      `}</style>
+      {/* Fix: Replace the problematic style tag with standard CSS classes */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+          }
+          
+          .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #e50914;
+            margin-right: 4px;
+            animation: pulse 1.4s infinite ease-in-out;
+          }
+          
+          .dot:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+          
+          .dot:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+          
+          @keyframes pulse {
+            0%, 50%, 100% { transform: scale(1); opacity: 1; }
+            25%, 75% { transform: scale(0.8); opacity: 0.6; }
+          }
+          
+          .conversation-container {
+            scrollbar-width: thin;
+            scrollbar-color: #444 #222;
+          }
+          
+          .conversation-container::-webkit-scrollbar {
+            width: 8px;
+          }
+          
+          .conversation-container::-webkit-scrollbar-track {
+            background: #222;
+          }
+          
+          .conversation-container::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 6px;
+            border: 2px solid #222;
+          }
+        `
+      }} />
     </>
   );
 };
