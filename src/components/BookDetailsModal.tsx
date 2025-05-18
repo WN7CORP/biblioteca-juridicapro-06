@@ -39,7 +39,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
           />
           <button 
             onClick={onClose} 
-            className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 rounded-full"
+            className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-opacity"
           >
             <X size={20} className="text-white" />
           </button>
@@ -50,13 +50,13 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
           <h2 className="text-xl font-bold mb-1 drop-shadow-lg">{book.livro}</h2>
           <p className="text-sm text-netflix-accent mb-4">{book.area}</p>
           
-          <p className="text-sm text-netflix-text mb-6">{book.sobre}</p>
+          <p className="text-sm text-netflix-text mb-6">{book.sobre || "Este material jurídico aborda temas essenciais para estudantes e profissionais do direito."}</p>
           
           <div className="grid grid-cols-2 gap-3 mb-6">
             <Button 
               variant="default" 
               onClick={handleRead}
-              className="bg-netflix-accent hover:bg-[#c11119] text-white flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+              className="bg-netflix-accent hover:bg-[#c11119] text-white flex items-center justify-center gap-2 hover:scale-105 transition-all duration-300"
             >
               <BookOpen size={18} />
               <span>Ler</span>
@@ -65,7 +65,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
             <Button 
               variant="outline" 
               onClick={handleDownload}
-              className="bg-transparent border-white/20 text-netflix-text hover:bg-netflix-cardHover flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+              className="bg-transparent border-white/20 text-netflix-text hover:bg-netflix-cardHover flex items-center justify-center gap-2 hover:scale-105 transition-all duration-300"
             >
               <Download size={18} />
               <span>Download</span>
@@ -106,6 +106,15 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
             
             .animate-dialog-entry {
               animation: dialog-entry 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            
+            @keyframes fade-in {
+              0% { opacity: 0; transform: translateY(10px); }
+              100% { opacity: 1; transform: translateY(0); }
+            }
+            
+            .animate-fade-in {
+              animation: fade-in 0.3s ease-out;
             }
           `
         }} />

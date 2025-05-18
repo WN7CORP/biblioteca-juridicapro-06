@@ -10,6 +10,7 @@ import { Book } from '@/types';
 import { Drawer, DrawerContent, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import BookDetailsModal from '@/components/BookDetailsModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
 
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
@@ -27,8 +28,9 @@ const AISearchBar: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Define guided questions for the AI search
+  // Define guided questions for the AI search - each question will only be asked once
   const questions = [
     "Que área do direito você deseja estudar? (ex: Civil, Penal, Constitucional)",
     "Há algum tema específico dentro dessa área?",
@@ -84,48 +86,88 @@ const AISearchBar: React.FC = () => {
   };
 
   const searchBooks = async (query: string) => {
-    // This is a simplified AI matching function
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsTyping(true);
       
-      // Simple keyword matching
-      const keywords = query.toLowerCase().split(/\s+/);
-      const matches = books.map(book => {
-        // Calculate a simple relevance score based on keyword matches
-        let score = 0;
-        keywords.forEach(keyword => {
-          if (book.livro.toLowerCase().includes(keyword)) score += 3;
-          if (book.area.toLowerCase().includes(keyword)) score += 2;
-          if (book.sobre && book.sobre.toLowerCase().includes(keyword)) score += 1;
-        });
-        return { book, score };
+      // Use Gemini AI for more intelligent book matching via our legal-assistant edge function
+      const userIp = localStorage.getItem('bibjuridica_user_id') || `demo-${Math.floor(Math.random() * 1000000)}`;
+      
+      const { data, error } = await supabase.functions.invoke('legal-assistant', {
+        body: {
+          action: 'find-books',
+          query: query,
+          userIp,
+          bookId: null
+        },
       });
       
-      // Sort by relevance and get top matches
-      const sortedMatches = matches
-        .filter(match => match.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5); // Get top 5 matches
+      setIsTyping(false);
       
-      if (sortedMatches.length > 0) {
-        const matchingBooks = sortedMatches.map(match => match.book);
-        setMatchedBooks(matchingBooks);
+      if (error) throw new Error(error.message);
+      
+      if (data && data.success) {
+        // Extract book IDs from the response
+        const bookIds = data.bookIds || [];
         
-        setAiConversation(prev => [
-          ...prev, 
-          `Assistente: Baseado no que você me disse, encontrei ${matchingBooks.length} ${matchingBooks.length === 1 ? 'livro' : 'livros'} que podem te ajudar:`
-        ]);
+        if (bookIds.length > 0) {
+          // Find the matching books from our local books array
+          const matchingBooks = books.filter(book => bookIds.includes(book.id));
+          
+          if (matchingBooks.length > 0) {
+            setMatchedBooks(matchingBooks);
+            
+            setAiConversation(prev => [
+              ...prev, 
+              `Assistente: Baseado no que você me disse, encontrei ${matchingBooks.length} ${matchingBooks.length === 1 ? 'livro' : 'livros'} que podem te ajudar:`
+            ]);
+          } else {
+            fallbackBookSearch(query);
+          }
+        } else {
+          fallbackBookSearch(query);
+        }
       } else {
-        setAiConversation(prev => [
-          ...prev, 
-          `Assistente: Não encontrei livros que correspondam exatamente à sua busca. Tente usar termos mais gerais ou outra área do direito.`
-        ]);
+        fallbackBookSearch(query);
       }
     } catch (error) {
+      console.error('Error with AI book search:', error);
+      fallbackBookSearch(query);
+    }
+  };
+  
+  // Fallback to simple keyword matching if AI search fails
+  const fallbackBookSearch = (query: string) => {
+    // Simple keyword matching
+    const keywords = query.toLowerCase().split(/\s+/);
+    const matches = books.map(book => {
+      // Calculate a simple relevance score based on keyword matches
+      let score = 0;
+      keywords.forEach(keyword => {
+        if (book.livro.toLowerCase().includes(keyword)) score += 3;
+        if (book.area.toLowerCase().includes(keyword)) score += 2;
+        if (book.sobre && book.sobre.toLowerCase().includes(keyword)) score += 1;
+      });
+      return { book, score };
+    });
+    
+    // Sort by relevance and get top matches
+    const sortedMatches = matches
+      .filter(match => match.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5); // Get top 5 matches
+    
+    if (sortedMatches.length > 0) {
+      const matchingBooks = sortedMatches.map(match => match.book);
+      setMatchedBooks(matchingBooks);
+      
       setAiConversation(prev => [
         ...prev, 
-        `Assistente: Ocorreu um erro ao processar sua pesquisa. Por favor, tente novamente.`
+        `Assistente: Baseado no que você me disse, encontrei ${matchingBooks.length} ${matchingBooks.length === 1 ? 'livro' : 'livros'} que podem te ajudar:`
+      ]);
+    } else {
+      setAiConversation(prev => [
+        ...prev, 
+        `Assistente: Não encontrei livros que correspondam exatamente à sua busca. Tente usar termos mais gerais ou outra área do direito.`
       ]);
     }
   };
@@ -224,7 +266,7 @@ const AISearchBar: React.FC = () => {
                             key={book.id}
                             onClick={() => handleBookClick(book)}
                             className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex"
-                            style={{ animationDelay: `${idx * 100}ms` }}
+                            style={{ animationDelay: `${idx * 150}ms` }}
                           >
                             <div className="w-1/3 overflow-hidden">
                               <img 
@@ -246,8 +288,8 @@ const AISearchBar: React.FC = () => {
                     </div>
                   )}
                   
-                  {/* Conversation history in a scrollable area */}
-                  <ScrollArea className="flex-1 min-h-0 pr-2">
+                  {/* Conversation history in a scrollable area with improved scrolling */}
+                  <ScrollArea className="flex-1 min-h-0 pr-2 overflow-y-auto" ref={scrollAreaRef}>
                     <div className="space-y-4 pb-4">
                       {aiConversation.map((message, idx) => (
                         <div 
@@ -275,10 +317,13 @@ const AISearchBar: React.FC = () => {
                       )}
                       
                       {isTyping && (
-                        <div className="typing-indicator ml-2 my-2">
-                          <span className="dot"></span>
-                          <span className="dot"></span>
-                          <span className="dot"></span>
+                        <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
+                          <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
+                          <div className="typing-indicator ml-2 my-2">
+                            <span className="dot"></span>
+                            <span className="dot"></span>
+                            <span className="dot"></span>
+                          </div>
                         </div>
                       )}
                       <div ref={messagesEndRef} />

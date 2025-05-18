@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, BookOpen, Network, HelpCircle, Send, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,6 +37,7 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
   const [mindmapMessages, setMindmapMessages] = useState<MessageType[]>([]);
   const [matchedBooks, setMatchedBooks] = useState<Book[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Get the current messages array based on active tab
@@ -252,9 +254,6 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
         
         setCurrentMessages([...messages, userMessage, assistantMessage]);
         
-        // Animate typing the response
-        typeResponse(data.response);
-        
         // Reset the question field for QA
         if (action === 'qa') {
           setQuestion('');
@@ -272,11 +271,18 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
         description: 'Não foi possível obter resposta do assistente jurídico.',
         variant: 'destructive',
       });
-      setResponse('Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-      setIsLoading(false);
-      setIsTyping(false);
+      
+      // Add error message to conversation
+      const errorMessage: MessageType = {
+        role: 'assistant',
+        content: 'Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.',
+        timestamp: new Date()
+      };
+      
+      setCurrentMessages([...messages, userMessage, errorMessage]);
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   };
 
@@ -365,7 +371,7 @@ const LegalAssistant: React.FC<LegalAssistantProps> = ({ book }) => {
               </TabsTrigger>
             </TabsList>
 
-            <ScrollArea className="flex-1 pr-4">
+            <ScrollArea className="flex-1 pr-4 overflow-y-auto" ref={scrollAreaRef}>
               {/* Books recommendation section - will be shown when available */}
               {matchedBooks.length > 0 && (
                 <div className="mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-scale-in">

@@ -26,10 +26,47 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
+    // Get all books if we need them for recommendations
+    let allBooks = [];
+    if (action === 'find-books') {
+      const { data: books, error: booksError } = await supabaseClient
+        .from('books')
+        .select('id, livro, area, sobre');
+      
+      if (booksError) throw new Error(booksError.message);
+      allBooks = books || [];
+    }
+
     // Create the prompt based on the requested action
     let prompt = "";
     
-    if (action === "summarize") {
+    if (action === 'find-books') {
+      // Convert the books to a simple JSON string for the AI to parse
+      const booksData = JSON.stringify(allBooks.map(b => ({
+        id: b.id,
+        titulo: b.livro,
+        area: b.area,
+        descricao: b.sobre
+      })));
+      
+      prompt = `Atue como um especialista em direito para ajudar a combinar os livros jurídicos mais relevantes com base na consulta do usuário.
+
+Consulta do usuário: "${query}"
+
+Abaixo está a lista de livros disponíveis no formato JSON:
+\`\`\`
+${booksData}
+\`\`\`
+
+Sua tarefa é analisar a consulta do usuário e identificar os 3-5 livros mais relevantes da lista. Responda APENAS com um objeto JSON contendo um array chamado "bookIds" com os IDs dos livros mais relevantes. Não inclua nenhum texto explicativo, apenas o objeto JSON.
+
+Por exemplo:
+\`\`\`
+{
+  "bookIds": ["id1", "id2", "id3"]
+}
+\`\`\``;
+    } else if (action === 'summarize') {
       prompt = `Por favor, crie um resumo abrangente e detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O resumo deve cobrir os principais conceitos, argumentos e conclusões do livro, mantendo a estrutura 
       organizada em tópicos claros e destacando os pontos mais importantes para estudantes de direito.
@@ -41,7 +78,7 @@ serve(async (req) => {
       - Citações relevantes com >
       
       Forneça uma estrutura clara dividida em seções como Introdução, Principais Conceitos, e Conclusão.`;
-    } else if (action === "mindmap") {
+    } else if (action === 'mindmap') {
       prompt = `Crie um mapa mental detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O mapa mental deve representar os principais conceitos e suas conexões, usando uma estrutura hierárquica 
       com o tema central, ramificações principais e sub-ramificações.
@@ -91,14 +128,42 @@ serve(async (req) => {
       responseText = "Desculpe, não consegui processar sua solicitação. Por favor, tente novamente.";
     }
 
-    // Store interaction in the database
-    await supabaseClient.from('book_assistant_history').insert({
-      user_ip: userIp,
-      book_id: bookId,
-      query: prompt,
-      response: responseText,
-      interaction_type: action
-    });
+    // Special handling for find-books action
+    if (action === 'find-books') {
+      try {
+        // Try to parse the JSON response
+        const bookRecommendation = JSON.parse(responseText);
+        
+        // Return the book IDs directly
+        return new Response(JSON.stringify({ 
+          success: true, 
+          bookIds: bookRecommendation.bookIds || []
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        console.error('Error parsing book recommendation JSON:', e);
+        
+        // Return empty bookIds if parsing fails
+        return new Response(JSON.stringify({ 
+          success: true, 
+          bookIds: []
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    // For other actions, store interaction in the database
+    if (bookId) {
+      await supabaseClient.from('book_assistant_history').insert({
+        user_ip: userIp,
+        book_id: bookId,
+        query: prompt,
+        response: responseText,
+        interaction_type: action
+      });
+    }
 
     // Return the response
     return new Response(JSON.stringify({ 
