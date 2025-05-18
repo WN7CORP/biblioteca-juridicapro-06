@@ -10,6 +10,7 @@ import ReadBook from "./pages/ReadBook";
 import Favorites from "./pages/Favorites";
 import Reading from "./pages/Reading";
 import Annotations from "./pages/Annotations";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/reading" element={<Reading />} />
             <Route path="/annotations" element={<Annotations />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

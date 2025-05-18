@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Search, X, FileText } from 'lucide-react';
+import { ArrowLeft, Search, X, FileText, Layers } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { Input } from '@/components/ui/input';
 
@@ -41,6 +41,14 @@ const Header: React.FC = () => {
             <h1 className="text-xl md:text-2xl font-bold text-netflix-accent">Biblioteca Jurídica</h1>
             
             <div className="flex items-center space-x-4">
+              <Link 
+                to="/categories" 
+                className="text-netflix-text hover:text-netflix-accent transition-colors hidden md:flex items-center"
+              >
+                <Layers size={20} className="mr-1" />
+                <span>Categorias</span>
+              </Link>
+              
               <Link 
                 to="/annotations" 
                 className="text-netflix-text hover:text-netflix-accent transition-colors hidden md:flex items-center"
