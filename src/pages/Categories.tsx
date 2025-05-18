@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLibrary } from '@/contexts/LibraryContext';
 import MobileNav from '@/components/MobileNav';
@@ -14,8 +14,8 @@ const Categories: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { areaName } = useParams<{ areaName?: string }>();
-  const [selectedBook, setSelectedBook] = React.useState(null);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Get unique areas and count books in each area
   const areaStats = books.reduce((acc: Record<string, number>, book) => {
@@ -43,6 +43,7 @@ const Categories: React.FC = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setSelectedBook(null);
   };
 
   return (
