@@ -32,16 +32,41 @@ serve(async (req) => {
     if (action === "summarize") {
       prompt = `Por favor, crie um resumo abrangente e detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O resumo deve cobrir os principais conceitos, argumentos e conclusões do livro, mantendo a estrutura 
-      organizada em tópicos claros e destacando os pontos mais importantes para estudantes de direito.`;
+      organizada em tópicos claros e destacando os pontos mais importantes para estudantes de direito.
+      
+      Use formatação Markdown para melhorar a estrutura do texto, com:
+      - Títulos (# e ## para hierarquia)
+      - Listas com marcadores (- ou *)
+      - Termos importantes em **negrito**
+      - Citações relevantes com >
+      
+      Forneça uma estrutura clara dividida em seções como Introdução, Principais Conceitos, e Conclusão.`;
     } else if (action === "mindmap") {
       prompt = `Crie um mapa mental detalhado do livro "${bookTitle}" da área de "${bookArea}". 
       O mapa mental deve representar os principais conceitos e suas conexões, usando uma estrutura hierárquica 
-      com o tema central, ramificações principais e sub-ramificações. Apresente em formato textual estruturado 
-      que um estudante de direito possa facilmente transformar em um mapa visual.`;
+      com o tema central, ramificações principais e sub-ramificações.
+      
+      Use formatação Markdown para criar uma representação textual estruturada:
+      - Use # para o título central
+      - Use ## para conceitos principais
+      - Use ### para subcategorias
+      - Use listas com - ou * para elementos de cada categoria
+      - Destaque termos-chave com **negrito**
+      
+      Organize o mapa mental de forma lógica, com conexões claras entre os conceitos, de modo que um estudante de direito possa facilmente transformar em um mapa visual.`;
     } else {
       // For Q&A
       prompt = `Como assistente jurídico especialista no livro "${bookTitle}" da área de "${bookArea}", 
-      por favor responda à seguinte pergunta de forma detalhada e precisa: ${query}`;
+      por favor responda à seguinte pergunta de forma detalhada e precisa, utilizando formatação Markdown para melhor estruturar sua resposta:
+
+      Pergunta: ${query}
+      
+      Sua resposta deve:
+      - Usar títulos e subtítulos quando apropriado (# e ##)
+      - Destacar termos jurídicos importantes em **negrito**
+      - Utilizar listas para enumerar pontos quando necessário
+      - Citar trechos relevantes do livro quando aplicável
+      - Explicar conceitos jurídicos de forma clara e acessível`;
     }
 
     // Call Gemini API

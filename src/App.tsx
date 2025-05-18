@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import ReadBook from "./pages/ReadBook";
 import Favorites from "./pages/Favorites";
 import Reading from "./pages/Reading";
+import Annotations from "./pages/Annotations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/read/:bookId" element={<ReadBook />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/reading" element={<Reading />} />
+            <Route path="/annotations" element={<Annotations />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

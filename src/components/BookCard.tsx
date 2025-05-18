@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Clock } from 'lucide-react';
 import { Book } from '@/types';
 import { useLibrary } from '@/contexts/LibraryContext';
 
 interface BookCardProps {
-  book: Book;
+  book: Book & { isNew?: boolean };
   onClick: () => void;
 }
 
@@ -19,7 +19,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
 
   return (
     <div 
-      className="book-card relative bg-netflix-card rounded-md overflow-hidden cursor-pointer"
+      className="book-card relative bg-netflix-card rounded-md overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200"
       onClick={onClick}
     >
       <div className="relative">
@@ -37,6 +37,14 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
             className={`transition-colors ${book.favorito ? 'text-netflix-accent fill-netflix-accent' : 'text-white'}`} 
           />
         </button>
+        
+        {/* New indicator badge */}
+        {book.isNew && (
+          <div className="absolute top-2 left-2 bg-netflix-accent text-xs text-white px-2 py-1 rounded-full flex items-center">
+            <Clock size={12} className="mr-1" />
+            Novo
+          </div>
+        )}
       </div>
       <div className="p-3">
         <h3 className="text-sm font-medium line-clamp-2">{book.livro}</h3>
