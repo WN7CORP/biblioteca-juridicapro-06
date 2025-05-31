@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, BookOpen, Download, BookmarkPlus, Check } from 'lucide-react';
 import { Book } from '@/types';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import NotesSection from './NotesSection';
 
@@ -28,9 +28,14 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
     window.open(book.download, '_blank');
   };
 
+  const handleClose = () => {
+    setShowNotes(false);
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
+      if (!open) handleClose();
     }}>
       <DialogContent className="bg-netflix-background border-netflix-cardHover max-w-md p-0 overflow-hidden animate-dialog-entry">
         {/* Properly implemented accessibility elements */}
@@ -43,10 +48,13 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({ book, isOpen, onClo
             alt={book.livro} 
             className="w-full h-[200px] object-cover" 
           />
-          <DialogClose className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-opacity">
+          <button
+            onClick={handleClose}
+            className="absolute top-2 right-2 p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-opacity z-10"
+          >
             <X size={20} className="text-white" />
             <span className="sr-only">Fechar</span>
-          </DialogClose>
+          </button>
           <div className="absolute inset-0 bg-gradient-to-t from-netflix-background to-transparent"></div>
         </div>
         

@@ -51,12 +51,12 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getUniqueId();
   }, []);
 
-  // Fetch books from Supabase with better error handling
+  // Fetch books from Supabase with better error handling - using biblioteca_juridica_duplicate
   const { data: books = [], isLoading, isError } = useQuery({
     queryKey: ['books'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('biblioteca_juridica')
+        .from('biblioteca_juridica_duplicate')
         .select('*')
         .order('id', { ascending: true });
       
