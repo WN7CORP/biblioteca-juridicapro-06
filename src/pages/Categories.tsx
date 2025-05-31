@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -72,28 +73,30 @@ const Categories: React.FC = () => {
               </div>
               
               {/* View mode toggle */}
-              <div className="flex items-center space-x-2 bg-netflix-card rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-all duration-200 ${
-                    viewMode === 'grid' 
-                      ? 'bg-netflix-accent text-white' 
-                      : 'text-netflix-secondary hover:text-white'
-                  }`}
-                >
-                  <Grid size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-all duration-200 ${
-                    viewMode === 'list' 
-                      ? 'bg-netflix-accent text-white' 
-                      : 'text-netflix-secondary hover:text-white'
-                  }`}
-                >
-                  <List size={18} />
-                </button>
-              </div>
+              {filteredBooks.length > 0 && (
+                <div className="flex items-center space-x-2 bg-netflix-card rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded transition-all duration-200 ${
+                      viewMode === 'grid' 
+                        ? 'bg-netflix-accent text-white' 
+                        : 'text-netflix-secondary hover:text-white'
+                    }`}
+                  >
+                    <Grid size={18} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded transition-all duration-200 ${
+                      viewMode === 'list' 
+                        ? 'bg-netflix-accent text-white' 
+                        : 'text-netflix-secondary hover:text-white'
+                    }`}
+                  >
+                    <List size={18} />
+                  </button>
+                </div>
+              )}
             </div>
             
             {viewMode === 'grid' ? (
@@ -139,7 +142,7 @@ const Categories: React.FC = () => {
                   <div
                     key={area}
                     onClick={() => handleAreaClick(area)}
-                    className={`${colorClass} rounded-xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group animate-fade-in`}
+                    className={`${colorClass} rounded-xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group animate-fade-in relative`}
                     style={{
                       animationDelay: `${index * 100}ms`,
                       animationFillMode: 'both'

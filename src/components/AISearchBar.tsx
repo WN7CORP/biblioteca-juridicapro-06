@@ -1,678 +1,183 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Loader2, Sparkles, X, Filter, TrendingUp, Heart } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Sparkles, Loader2, X, Send } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { Book } from '@/types';
-import { Drawer, DrawerContent, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
-import BookDetailsModal from '@/components/BookDetailsModal';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
-import { useSmoothScroll } from '@/hooks/useSmoothScroll';
+import { Button } from '@/components/ui/button';
 
-const AISearchBar: React.FC = () => {
-  const [aiQuery, setAiQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [showAISearch, setShowAISearch] = useState(true);
-  const [matchedBooks, setMatchedBooks] = useState<Book[]>([]);
-  const [relatedBooks, setRelatedBooks] = useState<Book[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [showBookModal, setShowBookModal] = useState(false);
-  const [searchResult, setSearchResult] = useState<string>('');
-  const [quickSearchResults, setQuickSearchResults] = useState<Book[]>([]);
-  const [showQuickResults, setShowQuickResults] = useState(false);
-  const { books, setSelectedArea, setSearchTerm, searchTerm, toggleFavorite } = useLibrary();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+const AISearchBar = () => {
+  const [query, setQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [aiResponse, setAiResponse] = useState('');
+  const { books } = useLibrary();
+  const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  
-  // New hooks for voice and scroll
-  const { speak, isPlaying } = useSpeechSynthesis();
-  const { scrollToResults } = useSmoothScroll();
 
-  // Popular search suggestions
-  const popularSearches = [
-    'Direito Civil',
-    'Direito Penal', 
-    'Contratos',
-    'Constitucional',
-    'Processo Civil',
-    'Direito do Trabalho'
-  ];
-
-  // Quick search functionality
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      const results = books
-        .filter(book => 
-          book.livro.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          book.area.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .slice(0, 5);
-      setQuickSearchResults(results);
-      setShowQuickResults(true);
-    } else {
-      setShowQuickResults(false);
-      setQuickSearchResults([]);
-    }
-  }, [searchTerm, books]);
-
-  // Scroll to the end when content updates
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [matchedBooks, relatedBooks, searchResult]);
-
-  const startAISearch = () => {
-    if (aiQuery.trim()) {
-      setIsDrawerOpen(true);
-      handleAISearch();
-    } else {
-      setIsDrawerOpen(true);
-    }
+  // Mock AI responses for demonstration
+  const mockAIResponses = {
+    'administrativo': 'Com base na sua pesquisa sobre Direito Administrativo, encontrei 25 livros relevantes. Esta área abrange temas como atos administrativos, licitações, contratos públicos e responsabilidade civil do Estado. Os livros mais atualizados incluem análises das últimas mudanças na Lei de Licitações.',
+    'constitucional': 'Para Direito Constitucional, nossa biblioteca possui 18 obras especializadas. Você encontrará desde fundamentos básicos até análises avançadas sobre direitos fundamentais, controle de constitucionalidade e organização do Estado brasileiro.',
+    'civil': 'Em Direito Civil, temos uma coleção robusta de 32 livros cobrindo obrigações, contratos, responsabilidade civil, direitos reais e direito de família. Inclui as mais recentes atualizações do Código Civil.',
+    'default': 'Com base na sua pesquisa, encontrei conteúdos relevantes em nossa biblioteca jurídica. Use palavras-chave específicas para resultados mais precisos, como "responsabilidade civil", "licitações" ou "direitos fundamentais".'
   };
 
-  const handleAISearch = async () => {
-    if (!aiQuery.trim()) {
-      toast({
-        title: 'Atenção',
-        description: 'Digite algo para buscar.',
-        variant: 'default',
-      });
-      return;
-    }
-
-    setIsSearching(true);
-    setMatchedBooks([]);
-    setRelatedBooks([]);
-    setSearchResult('');
-
-    try {
-      const userIp = localStorage.getItem('bibjuridica_user_id') || `demo-${Math.floor(Math.random() * 1000000)}`;
-      
-      const { data, error } = await supabase.functions.invoke('legal-assistant', {
-        body: {
-          action: 'find-books',
-          query: aiQuery,
-          userIp,
-          bookId: null
-        },
-      });
-
-      if (error) throw new Error(error.message);
-      
-      if (data && data.success) {
-        const bookIds = data.bookIds || [];
-        const relatedIds = data.relatedBookIds || [];
-        
-        if (bookIds.length > 0) {
-          const matchingBooks = books.filter(book => bookIds.includes(book.id));
-          setMatchedBooks(matchingBooks.slice(0, 1)); // Show only main result
-          
-          // Get related books
-          if (relatedIds.length > 0) {
-            const relatedBooksData = books.filter(book => relatedIds.includes(book.id));
-            setRelatedBooks(relatedBooksData.slice(0, 4)); // Show up to 4 related
-          }
-          
-          setSearchResult(data.explanation || 'Livro encontrado com base na sua busca.');
-          
-          // Add voice narration and smooth scroll
-          setTimeout(async () => {
-            await speak('Ótimo! Encontrei alguns livros perfeitos para você. Vou mostrar os resultados agora.');
-            
-            // Smooth scroll to results after a short delay
-            setTimeout(() => {
-              if (resultsRef.current) {
-                scrollToResults(resultsRef.current);
-              }
-            }, 1000);
-          }, 500);
-          
-        } else {
-          fallbackBookSearch(aiQuery);
-        }
-      } else {
-        fallbackBookSearch(aiQuery);
-      }
-    } catch (error) {
-      console.error('Error with AI book search:', error);
-      fallbackBookSearch(aiQuery);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Enhanced fallback search
-  const fallbackBookSearch = (query: string) => {
-    const keywords = query.toLowerCase().split(/\s+/);
-    const matches = books.map(book => {
-      let score = 0;
-      keywords.forEach(keyword => {
-        if (book.livro.toLowerCase().includes(keyword)) score += 3;
-        if (book.area.toLowerCase().includes(keyword)) score += 2;
-        if (book.sobre && book.sobre.toLowerCase().includes(keyword)) score += 1;
-      });
-      return { book, score };
-    });
+  const handleSearch = async () => {
+    if (!query.trim()) return;
     
-    const sortedMatches = matches
-      .filter(match => match.score > 0)
-      .sort((a, b) => b.score - a.score);
+    setIsLoading(true);
+    setShowResults(true);
     
-    if (sortedMatches.length > 0) {
-      setMatchedBooks([sortedMatches[0].book]); // Main result
-      
-      // Get related books from same area
-      const mainBook = sortedMatches[0].book;
-      const sameAreaBooks = books
-        .filter(book => book.area === mainBook.area && book.id !== mainBook.id)
-        .slice(0, 4);
-      setRelatedBooks(sameAreaBooks);
-      
-      setSearchResult(`Encontrei este livro de ${mainBook.area} que corresponde à sua busca.`);
-      
-      // Add voice narration and smooth scroll for fallback too
-      setTimeout(async () => {
-        await speak('Encontrei um livro que pode te interessar. Vou mostrar para você.');
-        
-        setTimeout(() => {
-          if (resultsRef.current) {
-            scrollToResults(resultsRef.current);
-          }
-        }, 1000);
-      }, 500);
-      
-    } else {
-      setSearchResult('Não encontrei livros correspondentes. Tente termos mais gerais como "Civil", "Penal" ou "Constitucional".');
-      speak('Não encontrei livros para essa busca. Tente termos mais gerais.');
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Filter books based on query
+    const filteredBooks = books.filter(book => 
+      book.livro.toLowerCase().includes(query.toLowerCase()) ||
+      book.area.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setResults(filteredBooks.slice(0, 6)); // Show max 6 results
+    
+    // Generate AI response based on query
+    const queryLower = query.toLowerCase();
+    let response = mockAIResponses.default;
+    
+    if (queryLower.includes('administrativo')) response = mockAIResponses.administrativo;
+    else if (queryLower.includes('constitucional')) response = mockAIResponses.constitucional;
+    else if (queryLower.includes('civil')) response = mockAIResponses.civil;
+    
+    setAiResponse(response);
+    setIsLoading(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
-  };
-
-  const handleBookClick = (book: Book) => {
-    setSelectedBook(book);
-    setShowBookModal(true);
-    setShowQuickResults(false);
-  };
-
-  const closeBookModal = () => {
-    setSelectedBook(null);
-    setShowBookModal(false);
-  };
-
-  const handleQuickSearch = (query: string) => {
-    setSearchTerm(query);
-    setShowQuickResults(false);
-    navigate('/categories');
   };
 
   const clearSearch = () => {
-    setSearchTerm('');
-    setShowQuickResults(false);
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+    setQuery('');
+    setShowResults(false);
+    setResults([]);
+    setAiResponse('');
+    inputRef.current?.focus();
   };
 
-  const handleFavoriteClick = async (e: React.MouseEvent, book: Book) => {
-    e.stopPropagation();
-    
-    try {
-      await toggleFavorite(book.id);
-      
-      if (!book.favorito) {
-        toast({
-          title: "❤️ Adicionado aos favoritos",
-          description: book.livro,
-          duration: 2000,
-        });
-      } else {
-        toast({
-          title: "Removido dos favoritos",
-          description: book.livro,
-          duration: 2000,
-        });
+  // Close results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (resultsRef.current && !resultsRef.current.contains(event.target as Node)) {
+        setShowResults(false);
       }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar favoritos. Tente novamente.",
-        variant: "destructive",
-        duration: 3000,
-      });
-    }
-  };
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className="mb-6">
-      <div className="bg-gradient-to-r from-netflix-card to-[#1a1a1a] rounded-lg p-4 border border-netflix-cardHover">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-white flex items-center">
-            <Search className="mr-2 text-netflix-accent" size={20} />
-            Encontre seu material
-          </h2>
+    <div className="relative w-full max-w-2xl mx-auto" ref={resultsRef}>
+      <div className="relative">
+        <div className="flex items-center bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden transition-all duration-200 focus-within:border-netflix-accent">
+          <div className="flex items-center px-4 py-3">
+            <Sparkles className="text-netflix-accent mr-2" size={20} />
+            <span className="text-netflix-accent text-sm font-medium whitespace-nowrap">Busca Inteligente</span>
+          </div>
+          
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Digite o que você procura..."
+            className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-4 py-3 focus:outline-none min-w-0"
+          />
+          
+          {query && (
+            <button
+              onClick={clearSearch}
+              className="p-2 text-netflix-secondary hover:text-white transition-colors"
+            >
+              <X size={18} />
+            </button>
+          )}
+          
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAISearch(!showAISearch)}
-            className="text-netflix-secondary hover:text-netflix-accent"
+            onClick={handleSearch}
+            disabled={!query.trim() || isLoading}
+            className="m-2 bg-netflix-accent hover:bg-netflix-accent/90 text-white rounded-lg px-4 py-2 transition-all duration-200 disabled:opacity-50"
           >
-            {showAISearch ? (
-              <>
-                <Filter size={16} className="mr-1" />
-                Busca simples
-              </>
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={18} />
             ) : (
-              <>
-                <Sparkles size={16} className="mr-1" />
-                Busca IA
-              </>
+              <Send size={18} />
             )}
           </Button>
         </div>
-        
-        {showAISearch ? (
-          <div className="space-y-3">
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-              <DrawerTrigger asChild>
-                <div className="flex gap-2">
-                  <div className="relative flex-grow">
-                    <Input
-                      type="text"
-                      placeholder="Ex: livro sobre contratos, direito penal, código civil..."
-                      value={aiQuery}
-                      onChange={(e) => setAiQuery(e.target.value)}
-                      className="bg-[#232323] border-netflix-accent border-2 text-white placeholder-gray-400 h-12 text-base pl-12 pr-4"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && aiQuery.trim()) {
-                          e.preventDefault();
-                          startAISearch();
-                        }
-                      }}
-                    />
-                    <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-netflix-accent" size={20} />
-                  </div>
-                  <Button
-                    onClick={startAISearch}
-                    className="bg-netflix-accent hover:bg-[#c11119] px-6 h-12 font-semibold"
-                    disabled={isPlaying}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {isPlaying ? 'Falando...' : 'Buscar IA'}
-                  </Button>
-                </div>
-              </DrawerTrigger>
-              
-              <DrawerContent className="max-h-[90vh] bg-netflix-background border-netflix-cardHover">
-                <div className="flex flex-col h-[80vh] max-h-[80vh]">
-                  <div className="p-4 space-y-4 flex-1 overflow-hidden flex flex-col">
-                    <h3 className="text-lg font-semibold text-white flex items-center">
-                      <Sparkles className="mr-2 text-netflix-accent" size={20} />
-                      Busca Inteligente
-                      {isPlaying && (
-                        <div className="ml-2 flex items-center text-sm text-netflix-accent">
-                          <div className="w-2 h-2 bg-netflix-accent rounded-full animate-pulse mr-1"></div>
-                          Narrando...
-                        </div>
-                      )}
-                    </h3>
-                    
-                    <ScrollArea className="flex-1 min-h-0 h-full w-full pr-2">
-                      <div className="space-y-4 pb-4">
-                        {/* Search input */}
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            placeholder="Digite o que você procura..."
-                            value={aiQuery}
-                            onChange={(e) => setAiQuery(e.target.value)}
-                            className="flex-grow bg-netflix-card border-netflix-cardHover text-xs"
-                            disabled={isSearching || isPlaying}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && aiQuery.trim() && !isSearching && !isPlaying) {
-                                e.preventDefault();
-                                handleAISearch();
-                              }
-                            }}
-                          />
-                          <Button 
-                            disabled={!aiQuery.trim() || isSearching || isPlaying}
-                            onClick={handleAISearch}
-                            className="bg-netflix-accent hover:bg-[#c11119] text-xs"
-                            size="sm"
-                          >
-                            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
-                          </Button>
-                        </div>
+      </div>
 
-                        {/* Search result explanation */}
-                        {searchResult && (
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-netflix-accent animate-fade-in">
-                            <p className="text-sm text-netflix-text">{searchResult}</p>
-                          </div>
-                        )}
-
-                        {/* Main result - IMPROVED PRESENTATION with smooth animations */}
-                        {matchedBooks.length > 0 && (
-                          <div 
-                            ref={resultsRef}
-                            className="space-y-3 mb-6 bg-gradient-to-r from-[#1a1a1a] to-[#2a1a1a] rounded-xl p-6 border-l-4 border-netflix-accent animate-smooth-entrance shadow-lg"
-                          >
-                            <div className="flex items-center mb-4">
-                              <BookOpen className="mr-2 text-netflix-accent" size={20} />
-                              <h4 className="font-bold text-white text-lg">📚 Resultado Principal</h4>
-                            </div>
-                            {matchedBooks.map((book, idx) => (
-                              <div 
-                                key={book.id}
-                                onClick={() => handleBookClick(book)}
-                                className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-500 rounded-xl overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:shadow-xl flex p-4 animate-book-reveal"
-                                style={{ animationDelay: `${idx * 200}ms` }}
-                              >
-                                <div className="w-24 h-32 overflow-hidden rounded-lg shadow-md flex-shrink-0">
-                                  <img 
-                                    src={book.imagem} 
-                                    alt={book.livro} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                  />
-                                </div>
-                                <div className="flex-grow pl-4 flex flex-col justify-between">
-                                  <div>
-                                    <h5 className="font-bold text-netflix-accent line-clamp-2 text-base mb-2 group-hover:text-white transition-colors duration-300">{book.livro}</h5>
-                                    <Badge variant="secondary" className="mb-2 bg-netflix-accent/20 text-netflix-accent border-netflix-accent/30">
-                                      {book.area}
-                                    </Badge>
-                                    <p className="text-sm text-netflix-text line-clamp-3 leading-relaxed">
-                                      {book.sobre || 'Material jurídico especializado para estudo e consulta. Conteúdo atualizado e de qualidade para sua formação jurídica.'}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center justify-between mt-4">
-                                    <Button
-                                      onClick={() => handleBookClick(book)}
-                                      className="bg-netflix-accent hover:bg-[#c11119] text-white text-sm px-4 py-2 transform hover:scale-105 transition-all duration-200"
-                                      size="sm"
-                                    >
-                                      Ver detalhes
-                                    </Button>
-                                    <button
-                                      onClick={(e) => handleFavoriteClick(e, book)}
-                                      className={`p-2 rounded-full transition-all duration-300 hover:scale-110 ${
-                                        book.favorito 
-                                          ? 'bg-netflix-accent/90 backdrop-blur-sm' 
-                                          : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
-                                      }`}
-                                    >
-                                      <Heart 
-                                        size={18} 
-                                        className={`transition-all duration-300 ${
-                                          book.favorito 
-                                            ? 'text-white fill-white' 
-                                            : 'text-white hover:text-netflix-accent'
-                                        }`} 
-                                      />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Related books - IMPROVED PRESENTATION */}
-                        {relatedBooks.length > 0 && (
-                          <div className="space-y-3 bg-gradient-to-r from-[#1a1a1a] to-[#151c2a] rounded-xl p-6 border-l-4 border-blue-500 animate-smooth-entrance shadow-lg">
-                            <div className="flex items-center mb-4">
-                              <Sparkles className="mr-2 text-blue-400" size={20} />
-                              <h4 className="font-bold text-white text-lg">🔗 Livros Relacionados</h4>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {relatedBooks.map((book, idx) => (
-                                <div 
-                                  key={book.id}
-                                  onClick={() => handleBookClick(book)}
-                                  className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex p-3 animate-book-reveal"
-                                  style={{ animationDelay: `${(idx + 1) * 150}ms` }}
-                                >
-                                  <div className="w-16 h-20 overflow-hidden rounded flex-shrink-0">
-                                    <img 
-                                      src={book.imagem} 
-                                      alt={book.livro} 
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                  </div>
-                                  <div className="flex-grow pl-3 flex flex-col justify-between">
-                                    <div>
-                                      <h5 className="font-medium text-blue-400 line-clamp-2 text-sm mb-1 group-hover:text-white transition-colors">{book.livro}</h5>
-                                      <p className="text-xs text-netflix-secondary">{book.area}</p>
-                                    </div>
-                                    <button
-                                      onClick={(e) => handleFavoriteClick(e, book)}
-                                      className={`self-end mt-2 p-1 rounded-full transition-all duration-200 hover:scale-110 ${
-                                        book.favorito 
-                                          ? 'bg-netflix-accent/90' 
-                                          : 'bg-black/50 hover:bg-black/70'
-                                      }`}
-                                    >
-                                      <Heart 
-                                        size={14} 
-                                        className={`transition-all duration-200 ${
-                                          book.favorito 
-                                            ? 'text-white fill-white' 
-                                            : 'text-white hover:text-netflix-accent'
-                                        }`} 
-                                      />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {isSearching && (
-                          <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
-                            <p className="text-xs text-netflix-secondary mb-1">IA</p>
-                            <div className="typing-indicator ml-2 my-2">
-                              <span className="dot"></span>
-                              <span className="dot"></span>
-                              <span className="dot"></span>
-                            </div>
-                          </div>
-                        )}
-
-                        <div ref={messagesEndRef} />
-                      </div>
-                    </ScrollArea>
-                  </div>
-                  
-                  <div className="flex justify-end p-4 border-t border-netflix-cardHover">
-                    <DrawerClose asChild>
-                      <Button variant="outline" size="sm">Fechar</Button>
-                    </DrawerClose>
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
-            
-            <p className="text-xs text-netflix-accent font-medium flex items-center">
-              <Sparkles className="mr-1" size={14} />
-              Busca inteligente: nossa IA encontra o livro perfeito para você
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="relative">
-              <Input
-                ref={searchInputRef}
-                type="search"
-                placeholder="Buscar por título, área ou tema..."
-                className="bg-[#232323] border-netflix-cardHover text-white placeholder-gray-400 h-12 text-base pl-12 pr-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-netflix-secondary" size={20} />
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-netflix-secondary hover:text-white"
-                >
-                  <X size={18} />
-                </button>
-              )}
-              
-              {/* Quick Search Results */}
-              {showQuickResults && quickSearchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-[#232323] border border-netflix-cardHover rounded-lg mt-1 z-50 max-h-60 overflow-y-auto">
-                  {quickSearchResults.map((book) => (
-                    <div
-                      key={book.id}
-                      onClick={() => handleBookClick(book)}
-                      className="p-3 hover:bg-netflix-cardHover cursor-pointer border-b border-netflix-cardHover last:border-b-0 flex items-center space-x-3"
-                    >
-                      <img 
-                        src={book.imagem} 
-                        alt={book.livro}
-                        className="w-8 h-10 object-cover rounded"
-                      />
-                      <div className="flex-grow">
-                        <h4 className="text-sm font-medium text-white line-clamp-1">{book.livro}</h4>
-                        <p className="text-xs text-netflix-secondary">{book.area}</p>
-                      </div>
-                      <BookOpen size={16} className="text-netflix-accent" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Popular Searches */}
-            <div>
-              <p className="text-xs text-netflix-secondary mb-2 flex items-center">
-                <TrendingUp size={14} className="mr-1" />
-                Buscas populares:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {popularSearches.map((search) => (
-                  <Badge
-                    key={search}
-                    variant="secondary"
-                    className="bg-netflix-cardHover hover:bg-netflix-accent hover:text-white cursor-pointer text-xs"
-                    onClick={() => handleQuickSearch(search)}
-                  >
-                    {search}
-                  </Badge>
-                ))}
+      {/* Results Dropdown */}
+      {showResults && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-netflix-card border border-netflix-cardHover rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto animate-fade-in">
+          {isLoading ? (
+            <div className="p-6 text-center">
+              <div className="flex items-center justify-center mb-3">
+                <Sparkles className="text-netflix-accent animate-pulse mr-2" size={24} />
+                <span className="text-netflix-accent">IA processando...</span>
+              </div>
+              <div className="animate-pulse text-netflix-secondary text-lg">
+                Analisando sua consulta e buscando os melhores resultados...
               </div>
             </div>
-          </div>
-        )}
-      </div>
-      
-      <BookDetailsModal 
-        book={selectedBook} 
-        isOpen={showBookModal} 
-        onClose={closeBookModal} 
-      />
-      
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .typing-indicator {
-            display: inline-flex;
-            align-items: center;
-          }
-          
-          .dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: #e50914;
-            margin-right: 3px;
-            animation: pulse 1.4s infinite ease-in-out;
-          }
-          
-          .dot:nth-child(2) {
-            animation-delay: 0.2s;
-          }
-          
-          .dot:nth-child(3) {
-            animation-delay: 0.4s;
-          }
-          
-          @keyframes pulse {
-            0%, 50%, 100% { transform: scale(1); opacity: 1; }
-            25%, 75% { transform: scale(0.8); opacity: 0.6; }
-          }
-          
-          .animate-fade-in {
-            animation: fade-in 0.3s ease-out;
-          }
-          
-          @keyframes fade-in {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          
-          .animate-smooth-entrance {
-            animation: smooth-entrance 0.8s ease-out forwards;
-          }
-          
-          @keyframes smooth-entrance {
-            0% { 
-              opacity: 0; 
-              transform: translateY(-30px) scale(0.95); 
-            }
-            50% { 
-              opacity: 0.7; 
-              transform: translateY(10px) scale(1.02); 
-            }
-            100% { 
-              opacity: 1; 
-              transform: translateY(0) scale(1); 
-            }
-          }
-          
-          .animate-book-reveal {
-            animation: book-reveal 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          
-          @keyframes book-reveal {
-            0% { 
-              opacity: 0; 
-              transform: translateX(-20px) scale(0.95); 
-            }
-            60% { 
-              opacity: 0.8; 
-              transform: translateX(5px) scale(1.02); 
-            }
-            100% { 
-              opacity: 1; 
-              transform: translateX(0) scale(1); 
-            }
-          }
-          
-          .book-card {
-            animation: book-zoom-in 0.5s ease-out forwards;
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          
-          @keyframes book-zoom-in {
-            0% { opacity: 0; transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
-          }
-        `
-      }} />
+          ) : (
+            <>
+              {/* AI Response */}
+              {aiResponse && (
+                <div className="p-4 border-b border-netflix-cardHover bg-netflix-cardHover/50">
+                  <div className="flex items-start mb-2">
+                    <Sparkles className="text-netflix-accent mt-1 mr-2 flex-shrink-0" size={16} />
+                    <span className="text-netflix-accent font-medium text-sm">Resposta da IA</span>
+                  </div>
+                  <p className="text-white text-base leading-relaxed ml-6">{aiResponse}</p>
+                </div>
+              )}
+              
+              {/* Search Results */}
+              {results.length > 0 && (
+                <div className="p-4">
+                  <h3 className="text-netflix-secondary text-sm font-medium mb-3">
+                    Livros encontrados ({results.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {results.map((book) => (
+                      <div key={book.id} className="flex items-center p-3 rounded-lg hover:bg-netflix-cardHover transition-colors cursor-pointer">
+                        <img 
+                          src={book.imagem} 
+                          alt={book.livro}
+                          className="w-10 h-12 object-cover rounded mr-3 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-medium text-sm line-clamp-1">{book.livro}</h4>
+                          <p className="text-netflix-secondary text-xs">{book.area}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {results.length === 0 && !isLoading && aiResponse && (
+                <div className="p-4 text-center">
+                  <p className="text-netflix-secondary">Nenhum livro específico encontrado, mas a IA pode te ajudar!</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
