@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book, Note } from '../types';
 import { mockBooks, mockNotes } from '../data/mockData';
@@ -52,38 +51,44 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getUniqueId();
   }, []);
 
-  // Fetch books from Supabase with better error handling - using biblioteca_juridica_duplicate
+  // Fetch books from Supabase with better error handling
   const { data: books = [], isLoading, isError } = useQuery({
     queryKey: ['books'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('biblioteca_juridica_duplicate')
-        .select('*')
-        .order('id', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching books:', error);
-        return mockBooks; // Fallback to mock data
+      try {
+        const { data, error } = await supabase
+          .from('biblioteca_juridica_duplicate')
+          .select('*')
+          .order('id', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching books:', error);
+          throw new Error(`Failed to fetch books: ${error.message}`);
+        }
+        
+        // Convert the data to match our Book interface with proper type conversion
+        return data.map(book => ({
+          id: Number(book.id), // Ensure id is a number
+          area: book.area || '',
+          livro: book.livro || '',
+          link: book.link || '',
+          imagem: book.imagem || '/placeholder.svg', // Fallback image
+          sobre: book.sobre || '',
+          download: book.download || '',
+          favorito: false, // We'll set this based on user favorites
+          progresso: parseInt(book.progresso?.toString() || '0') || 0, // Ensure it's a number
+          created_at: book.created_at || new Date().toISOString()
+        })) as Book[];
+      } catch (error) {
+        console.error('Query error:', error);
+        // Return mock data as fallback
+        return mockBooks;
       }
-      
-      // Convert the data to match our Book interface
-      return data.map(book => ({
-        id: book.id,
-        area: book.area || '',
-        livro: book.livro || '',
-        link: book.link || '',
-        imagem: book.imagem || '',
-        sobre: book.sobre || '',
-        download: book.download || '',
-        favorito: false, // We'll set this based on user favorites
-        progresso: parseInt(book.progresso) || 0,
-        created_at: book.created_at
-      })) as Book[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
-    retryDelay: 1000,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
   
   // Fetch user favorites
@@ -92,17 +97,22 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     queryFn: async () => {
       if (!userIp) return [];
       
-      const { data, error } = await supabase
-        .from('book_favorites')
-        .select('book_id')
-        .eq('user_ip', userIp);
-      
-      if (error) {
-        console.error('Error fetching favorites:', error);
+      try {
+        const { data, error } = await supabase
+          .from('book_favorites')
+          .select('book_id')
+          .eq('user_ip', userIp);
+        
+        if (error) {
+          console.error('Error fetching favorites:', error);
+          return [];
+        }
+        
+        return data.map(fav => Number(fav.book_id));
+      } catch (error) {
+        console.error('Favorites query error:', error);
         return [];
       }
-      
-      return data.map(fav => Number(fav.book_id));
     },
     enabled: !!userIp,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -114,23 +124,28 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     queryFn: async () => {
       if (!userIp) return mockNotes;
       
-      const { data, error } = await supabase
-        .from('book_notes')
-        .select('*')
-        .eq('user_ip', userIp)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching notes:', error);
+      try {
+        const { data, error } = await supabase
+          .from('book_notes')
+          .select('*')
+          .eq('user_ip', userIp)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching notes:', error);
+          return mockNotes;
+        }
+        
+        return data.map(note => ({
+          id: note.id,
+          bookId: Number(note.book_id),
+          content: note.note_text,
+          createdAt: new Date(note.created_at),
+        })) as Note[];
+      } catch (error) {
+        console.error('Notes query error:', error);
         return mockNotes;
       }
-      
-      return data.map(note => ({
-        id: note.id,
-        bookId: Number(note.book_id),
-        content: note.note_text,
-        createdAt: new Date(note.created_at),
-      })) as Note[];
     },
     enabled: !!userIp,
     staleTime: 1 * 60 * 1000, // 1 minute
@@ -188,6 +203,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toast({
         title: "Erro ao atualizar favoritos",
         description: error.message,
+        variant: "destructive",
       });
     }
   });
@@ -212,6 +228,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toast({
         title: "Erro ao adicionar nota",
         description: error.message,
+        variant: "destructive",
       });
     }
   });
@@ -235,6 +252,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toast({
         title: "Erro ao excluir nota",
         description: error.message,
+        variant: "destructive",
       });
     }
   });
@@ -249,7 +267,9 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const filteredBooks = enhancedBooks.filter(book => {
     const matchesArea = selectedArea ? book.area === selectedArea : true;
     const matchesSearch = searchTerm
-      ? book.livro.toLowerCase().includes(searchTerm.toLowerCase()) || book.area.toLowerCase().includes(searchTerm.toLowerCase())
+      ? book.livro.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        book.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.sobre.toLowerCase().includes(searchTerm.toLowerCase())
       : true;
     return matchesArea && matchesSearch;
   });
@@ -271,7 +291,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Add a note
+  // Add note mutation
   const addNote = (bookId: number, content: string) => {
     addNoteMutation.mutate({ bookId, content });
     toast({
@@ -280,7 +300,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  // Delete a note
+  // Delete note mutation
   const deleteNote = (noteId: string) => {
     deleteNoteMutation.mutate(noteId);
     toast({

@@ -16,6 +16,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
   const { toggleFavorite } = useLibrary();
   const { toast } = useToast();
   const [isAnimating, setIsAnimating] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleFavoriteClick = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,6 +58,10 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
     }
   }, [book.id, book.favorito, book.livro, toggleFavorite, toast]);
 
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
+
   return (
     <div 
       className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-smooth hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent"
@@ -67,11 +72,23 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
       }}
     >
       <div className="relative">
-        <LazyImage 
-          src={book.imagem} 
-          alt={book.livro}
-          className="w-full aspect-[2/3]"
-        />
+        {imageError ? (
+          <div className="w-full aspect-[2/3] bg-netflix-cardHover flex items-center justify-center">
+            <div className="text-center p-4">
+              <div className="w-12 h-12 mx-auto mb-2 bg-netflix-accent/20 rounded-full flex items-center justify-center">
+                <Heart size={24} className="text-netflix-accent" />
+              </div>
+              <p className="text-xs text-netflix-secondary">Capa não disponível</p>
+            </div>
+          </div>
+        ) : (
+          <LazyImage 
+            src={book.imagem} 
+            alt={book.livro}
+            className="w-full aspect-[2/3]"
+            onError={handleImageError}
+          />
+        )}
         
         {/* Overlay gradient for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -83,6 +100,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
               ? 'bg-netflix-accent/90 backdrop-blur-sm animate-glow' 
               : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
           }`}
+          aria-label={book.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         >
           <Heart 
             size={18} 
@@ -119,6 +137,16 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
           </div>
         )}
 
+        {/* Progress indicator if available */}
+        {book.progresso > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
+            <div 
+              className="h-full bg-netflix-accent transition-all duration-300"
+              style={{ width: `${Math.min(book.progresso, 100)}%` }}
+            />
+          </div>
+        )}
+
         {/* Quick action overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
           <div className="bg-white/10 backdrop-blur-sm rounded-full p-3 transform scale-75 group-hover:scale-100 transition-bounce">
@@ -134,6 +162,14 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
         <p className="text-xs text-netflix-secondary mt-1 transition-smooth group-hover:text-netflix-accent">
           {book.area}
         </p>
+        {/* Progress percentage if available */}
+        {book.progresso > 0 && (
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-netflix-secondary">
+              {book.progresso}% lido
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
