@@ -20,6 +20,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
     e.stopPropagation();
     
     try {
+      console.log('Favoriting book:', book.id, 'Current status:', book.favorito);
       await toggleFavorite(book.id);
       
       toast({
@@ -59,7 +60,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
         
         <button
           onClick={handleFavoriteClick}
-          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-200 hover:scale-110 z-10 ${
             book.favorito 
               ? 'bg-netflix-accent/90 backdrop-blur-sm' 
               : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'

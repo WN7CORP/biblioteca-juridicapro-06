@@ -5,9 +5,11 @@ import { useLibrary } from '@/contexts/LibraryContext';
 import MobileNav from '@/components/MobileNav';
 import Header from '@/components/Header';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Layers, Book, ArrowLeft, Search } from 'lucide-react';
+import { Layers, Book, ArrowLeft, Search, Grid, List } from 'lucide-react';
 import BookGrid from '@/components/BookGrid';
+import BookList from '@/components/BookList';
 import BookDetailsModal from '@/components/BookDetailsModal';
+import FunctionsTutorial from '@/components/FunctionsTutorial';
 
 const Categories: React.FC = () => {
   const { books, setSelectedArea } = useLibrary();
@@ -16,6 +18,7 @@ const Categories: React.FC = () => {
   const { areaName } = useParams<{ areaName?: string }>();
   const [selectedBook, setSelectedBook] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Get unique areas and count books in each area
   const areaStats = books.reduce((acc: Record<string, number>, book) => {
@@ -50,28 +53,65 @@ const Categories: React.FC = () => {
     <div className="min-h-screen bg-netflix-background text-netflix-text">
       {isMobile ? <MobileNav /> : <Header />}
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
+        {/* Tutorial fixo */}
+        <FunctionsTutorial />
+        
         {areaName ? (
           <>
-            <div className="flex items-center mb-6 animate-fade-in">
-              <button 
-                onClick={() => navigate('/categories')}
-                className="mr-4 flex items-center text-netflix-accent hover:text-white transition-colors duration-200 group"
-              >
-                <ArrowLeft size={20} className="mr-1 transform group-hover:-translate-x-1 transition-transform duration-200" />
-                <span>Voltar</span>
-              </button>
-              <h1 className="text-xl font-bold flex items-center">
-                <Book className="mr-2" size={24} />
-                {areaName}
-              </h1>
-              <div className="ml-auto text-sm text-netflix-secondary">
-                {filteredBooks.length} {filteredBooks.length === 1 ? 'livro' : 'livros'}
+            <div className="flex items-center justify-between mb-6 animate-fade-in">
+              <div className="flex items-center">
+                <button 
+                  onClick={() => navigate('/categories')}
+                  className="mr-4 flex items-center text-netflix-accent hover:text-white transition-colors duration-200 group"
+                >
+                  <ArrowLeft size={20} className="mr-1 transform group-hover:-translate-x-1 transition-transform duration-200" />
+                  <span>Voltar</span>
+                </button>
+                <h1 className="text-xl font-bold flex items-center">
+                  <Book className="mr-2" size={24} />
+                  {areaName}
+                </h1>
+                <div className="ml-4 text-sm text-netflix-secondary">
+                  {filteredBooks.length} {filteredBooks.length === 1 ? 'livro' : 'livros'}
+                </div>
+              </div>
+              
+              {/* View mode toggle */}
+              <div className="flex items-center space-x-2 bg-netflix-card rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded transition-all duration-200 ${
+                    viewMode === 'grid' 
+                      ? 'bg-netflix-accent text-white' 
+                      : 'text-netflix-secondary hover:text-white'
+                  }`}
+                >
+                  <Grid size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded transition-all duration-200 ${
+                    viewMode === 'list' 
+                      ? 'bg-netflix-accent text-white' 
+                      : 'text-netflix-secondary hover:text-white'
+                  }`}
+                >
+                  <List size={18} />
+                </button>
               </div>
             </div>
-            <BookGrid 
-              books={filteredBooks} 
-              onBookClick={handleBookClick} 
-            />
+            
+            {viewMode === 'grid' ? (
+              <BookGrid 
+                books={filteredBooks} 
+                onBookClick={handleBookClick} 
+              />
+            ) : (
+              <BookList 
+                books={filteredBooks} 
+                onBookClick={handleBookClick} 
+              />
+            )}
           </>
         ) : (
           <>
