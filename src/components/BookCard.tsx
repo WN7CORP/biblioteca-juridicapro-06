@@ -68,16 +68,16 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
 
   return (
     <div 
-      className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-smooth hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent flex flex-col h-full"
+      className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-smooth hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent h-full"
       onClick={onClick}
       style={{
         animationDelay: `${index * 50}ms`,
         animationFillMode: 'both'
       }}
     >
-      <div className="relative flex-shrink-0">
+      <div className="relative h-full">
         {imageError ? (
-          <div className="w-full aspect-[2/3] bg-netflix-cardHover flex items-center justify-center">
+          <div className="w-full h-full bg-netflix-cardHover flex items-center justify-center">
             <div className="text-center p-4">
               <div className="w-12 h-12 mx-auto mb-2 bg-netflix-accent/20 rounded-full flex items-center justify-center">
                 <Heart size={24} className="text-netflix-accent" />
@@ -90,15 +90,15 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
             <LazyImage 
               src={book.imagem} 
               alt={book.livro}
-              className="w-full aspect-[2/3]"
+              className="w-full h-full object-cover"
               onError={handleImageError}
               priority={imagePriority}
             />
             
-            {/* Título estrategicamente posicionado na capa */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+            {/* Título sempre visível na capa */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent">
               <div className="absolute bottom-0 left-0 right-0 p-3">
-                <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2 mb-1 drop-shadow-lg">
+                <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-3 mb-2 drop-shadow-lg leading-tight">
                   {book.livro}
                 </h3>
                 <p className="text-netflix-accent text-xs font-medium drop-shadow-lg">
@@ -169,27 +169,6 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
             <div className="text-white text-sm font-medium">Ver detalhes</div>
           </div>
         </div>
-      </div>
-      
-      {/* Compact bottom info - fallback for when hover is not available */}
-      <div className="flex flex-col flex-grow p-3 transition-smooth group-hover:bg-netflix-cardHover min-h-[80px] sm:group-hover:opacity-50">
-        <div className="flex-grow">
-          <h3 className="text-sm font-medium line-clamp-2 transition-smooth group-hover:text-white mb-1">
-            {book.livro}
-          </h3>
-          <p className="text-xs text-netflix-secondary transition-smooth group-hover:text-netflix-accent">
-            {book.area}
-          </p>
-        </div>
-        
-        {/* Progress percentage if available - always at bottom */}
-        {book.progresso > 0 && (
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-netflix-cardHover/30">
-            <span className="text-xs text-netflix-secondary">
-              {book.progresso}% lido
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
