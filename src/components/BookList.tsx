@@ -21,9 +21,9 @@ const BookList: React.FC<BookListProps> = ({ books, onBookClick, highlightedBook
     e.stopPropagation();
     
     try {
-      // Trigger animation
+      // Enhanced animation for mobile
       setAnimatingBookId(book.id);
-      setTimeout(() => setAnimatingBookId(null), 600);
+      setTimeout(() => setAnimatingBookId(null), 800);
       
       await toggleFavorite(book.id);
       
@@ -102,7 +102,7 @@ const BookList: React.FC<BookListProps> = ({ books, onBookClick, highlightedBook
               <div className="flex items-center space-x-2">
                 <button
                   onClick={(e) => handleFavoriteClick(e, book)}
-                  className={`relative p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+                  className={`relative p-2 rounded-full transition-all duration-300 hover:scale-110 ${
                     book.favorito 
                       ? 'bg-netflix-accent/90 backdrop-blur-sm' 
                       : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
@@ -116,20 +116,21 @@ const BookList: React.FC<BookListProps> = ({ books, onBookClick, highlightedBook
                         : 'text-white hover:text-netflix-accent'
                     } ${
                       isAnimating 
-                        ? 'animate-pulse scale-125' 
+                        ? 'animate-bounce scale-125' 
                         : ''
                     }`}
                     style={{
-                      filter: isAnimating ? 'drop-shadow(0 0 8px rgba(229, 9, 20, 0.8))' : 'none'
+                      filter: isAnimating ? 'drop-shadow(0 0 12px rgba(229, 9, 20, 0.8))' : 'none'
                     }}
                   />
                   
-                  {/* Animação de ondas quando favoritar */}
-                  {isAnimating && !book.favorito && (
+                  {/* Enhanced Animation for Mobile */}
+                  {isAnimating && (
                     <div className="absolute inset-0 rounded-full">
-                      <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" />
-                      <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.1s' }} />
-                      <div className="absolute inset-0 rounded-full bg-netflix-accent/10 animate-ping" style={{ animationDelay: '0.2s' }} />
+                      <div className="absolute inset-0 rounded-full bg-netflix-accent/40 animate-ping" />
+                      <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" style={{ animationDelay: '0.1s' }} />
+                      <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.2s' }} />
+                      <div className="absolute inset-0 rounded-full bg-netflix-accent/10 animate-ping" style={{ animationDelay: '0.3s' }} />
                     </div>
                   )}
                 </button>

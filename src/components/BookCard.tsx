@@ -23,9 +23,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
     try {
       console.log('Favoriting book:', book.id, 'Current status:', book.favorito);
       
-      // Trigger animation
+      // Enhanced animation for mobile
       setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 600);
+      setTimeout(() => setIsAnimating(false), 800);
       
       await toggleFavorite(book.id);
       
@@ -66,7 +66,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
         
         <button
           onClick={handleFavoriteClick}
-          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-200 hover:scale-110 z-10 ${
+          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 hover:scale-110 z-10 ${
             book.favorito 
               ? 'bg-netflix-accent/90 backdrop-blur-sm' 
               : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
@@ -80,20 +80,21 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
                 : 'text-white hover:text-netflix-accent'
             } ${
               isAnimating 
-                ? 'animate-pulse scale-125' 
+                ? 'animate-bounce scale-125' 
                 : ''
             }`}
             style={{
-              filter: isAnimating ? 'drop-shadow(0 0 8px rgba(229, 9, 20, 0.8))' : 'none'
+              filter: isAnimating ? 'drop-shadow(0 0 12px rgba(229, 9, 20, 0.8))' : 'none'
             }}
           />
           
-          {/* Animação de ondas quando favoritar */}
-          {isAnimating && !book.favorito && (
+          {/* Enhanced Animation for Mobile */}
+          {isAnimating && (
             <div className="absolute inset-0 rounded-full">
-              <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" />
-              <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.1s' }} />
-              <div className="absolute inset-0 rounded-full bg-netflix-accent/10 animate-ping" style={{ animationDelay: '0.2s' }} />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/40 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" style={{ animationDelay: '0.1s' }} />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.2s' }} />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/10 animate-ping" style={{ animationDelay: '0.3s' }} />
             </div>
           )}
         </button>
