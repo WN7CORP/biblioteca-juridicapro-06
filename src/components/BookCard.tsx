@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, Clock } from 'lucide-react';
 import { Book } from '@/types';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -15,12 +15,18 @@ interface BookCardProps {
 const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
   const { toggleFavorite } = useLibrary();
   const { toast } = useToast();
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
     try {
       console.log('Favoriting book:', book.id, 'Current status:', book.favorito);
+      
+      // Trigger animation
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 600);
+      
       await toggleFavorite(book.id);
       
       toast({
@@ -68,12 +74,28 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
         >
           <Heart 
             size={18} 
-            className={`transition-all duration-200 ${
+            className={`transition-all duration-500 ${
               book.favorito 
                 ? 'text-white fill-white' 
                 : 'text-white hover:text-netflix-accent'
-            }`} 
+            } ${
+              isAnimating 
+                ? 'animate-pulse scale-125' 
+                : ''
+            }`}
+            style={{
+              filter: isAnimating ? 'drop-shadow(0 0 8px rgba(229, 9, 20, 0.8))' : 'none'
+            }}
           />
+          
+          {/* Animação de ondas quando favoritar */}
+          {isAnimating && !book.favorito && (
+            <div className="absolute inset-0 rounded-full">
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.1s' }} />
+              <div className="absolute inset-0 rounded-full bg-netflix-accent/10 animate-ping" style={{ animationDelay: '0.2s' }} />
+            </div>
+          )}
         </button>
         
         {/* New indicator badge */}

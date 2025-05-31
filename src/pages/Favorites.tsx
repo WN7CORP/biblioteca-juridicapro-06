@@ -6,7 +6,6 @@ import BookGrid from '@/components/BookGrid';
 import BookList from '@/components/BookList';
 import BookDetailsModal from '@/components/BookDetailsModal';
 import MobileNav from '@/components/MobileNav';
-import FunctionsTutorial from '@/components/FunctionsTutorial';
 import { Book } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Grid, List, Heart } from 'lucide-react';
@@ -31,9 +30,6 @@ const Favorites = () => {
     <div className="min-h-screen bg-netflix-background text-netflix-text">
       {isMobile ? <MobileNav /> : <Header />}
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
-        {/* Tutorial fixo */}
-        <FunctionsTutorial />
-        
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold flex items-center">
             <Heart className="mr-3 text-netflix-accent" size={28} />

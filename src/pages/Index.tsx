@@ -10,7 +10,6 @@ import QuickStartGuide from '@/components/QuickStartGuide';
 import AISearchBar from '@/components/AISearchBar';
 import AreaStats from '@/components/AreaStats';
 import FAQ from '@/components/FAQ';
-import FunctionsTutorial from '@/components/FunctionsTutorial';
 import { Book } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -54,9 +53,6 @@ const Index = () => {
         <HeroSection />
         
         <div className="container mx-auto px-4 pb-16">
-          {/* Tutorial fixo */}
-          <FunctionsTutorial />
-          
           {/* Quick Start Guide for new users */}
           <QuickStartGuide />
           

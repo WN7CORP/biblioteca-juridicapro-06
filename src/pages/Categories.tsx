@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -9,7 +8,6 @@ import { Layers, Book, ArrowLeft, Search, Grid, List } from 'lucide-react';
 import BookGrid from '@/components/BookGrid';
 import BookList from '@/components/BookList';
 import BookDetailsModal from '@/components/BookDetailsModal';
-import FunctionsTutorial from '@/components/FunctionsTutorial';
 
 const Categories: React.FC = () => {
   const { books, setSelectedArea } = useLibrary();
@@ -53,9 +51,6 @@ const Categories: React.FC = () => {
     <div className="min-h-screen bg-netflix-background text-netflix-text">
       {isMobile ? <MobileNav /> : <Header />}
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
-        {/* Tutorial fixo */}
-        <FunctionsTutorial />
-        
         {areaName ? (
           <>
             <div className="flex items-center justify-between mb-6 animate-fade-in">
