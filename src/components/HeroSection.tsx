@@ -88,7 +88,7 @@ const HeroSection: React.FC = () => {
           <div className="flex justify-center items-center space-x-6 text-netflix-secondary">
             <div className="flex items-center">
               <Star className="text-yellow-400 mr-1" size={16} />
-              <span className="text-sm">Conteúdo Gratuito</span>
+              <span className="text-sm">Conteúdo de Estudos</span>
             </div>
             <div className="flex items-center">
               <Book className="text-netflix-accent mr-1" size={16} />
