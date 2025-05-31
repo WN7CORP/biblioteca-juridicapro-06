@@ -62,8 +62,8 @@ const HeroSection: React.FC = () => {
           </div>
           <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-netflix-accent/20">
             <Users className="text-netflix-accent mx-auto mb-2" size={32} />
-            <div className="text-2xl font-bold text-white">Grátis</div>
-            <div className="text-sm text-netflix-secondary">Para Sempre</div>
+            <div className="text-2xl font-bold text-white">100%</div>
+            <div className="text-sm text-netflix-secondary">Atualizado</div>
           </div>
         </div>
 
@@ -95,7 +95,7 @@ const HeroSection: React.FC = () => {
             </div>
             <div className="flex items-center">
               <Book className="text-netflix-accent mr-1" size={16} />
-              <span className="text-sm">Sempre Atualizado</span>
+              <span className="text-sm">100% Atualizado</span>
             </div>
             <div className="flex items-center">
               <Sparkles className="text-blue-400 mr-1" size={16} />

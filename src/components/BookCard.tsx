@@ -4,6 +4,7 @@ import { Heart, Clock } from 'lucide-react';
 import { Book } from '@/types';
 import { useLibrary } from '@/contexts/LibraryContext';
 import LazyImage from './LazyImage';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookCardProps {
   book: Book & { isNew?: boolean };
@@ -13,15 +14,40 @@ interface BookCardProps {
 
 const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
   const { toggleFavorite } = useLibrary();
+  const { toast } = useToast();
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleFavorite(book.id);
+    
+    try {
+      await toggleFavorite(book.id);
+      
+      if (!book.favorito) {
+        toast({
+          title: "❤️ Adicionado aos favoritos",
+          description: book.livro,
+          duration: 2000,
+        });
+      } else {
+        toast({
+          title: "Removido dos favoritos",
+          description: book.livro,
+          duration: 2000,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar favoritos. Tente novamente.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   return (
     <div 
-      className="book-card relative bg-netflix-card rounded-md overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group"
+      className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent"
       onClick={onClick}
       style={{
         animationDelay: `${index * 50}ms`,
@@ -40,13 +66,17 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
         
         <button
           onClick={handleFavoriteClick}
-          className="absolute top-2 right-2 p-1.5 bg-black/50 backdrop-blur-sm rounded-full transition-all duration-200 hover:bg-black/70 hover:scale-110"
+          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+            book.favorito 
+              ? 'bg-netflix-accent/90 backdrop-blur-sm' 
+              : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
+          }`}
         >
           <Heart 
             size={18} 
             className={`transition-all duration-200 ${
               book.favorito 
-                ? 'text-netflix-accent fill-netflix-accent scale-110' 
+                ? 'text-white fill-white' 
                 : 'text-white hover:text-netflix-accent'
             }`} 
           />
@@ -54,7 +84,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
         
         {/* New indicator badge */}
         {book.isNew && (
-          <div className="absolute top-2 left-2 bg-netflix-accent text-xs text-white px-2 py-1 rounded-full flex items-center animate-pulse shadow-lg">
+          <div className="absolute top-2 left-2 bg-blue-500 text-xs text-white px-2 py-1 rounded-full flex items-center animate-pulse shadow-lg">
             <Clock size={12} className="mr-1" />
             Novo
           </div>

@@ -40,19 +40,19 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-netflix-background text-netflix-text" data-intro="welcome">
+    <div className="min-h-screen bg-netflix-background text-netflix-text">
       {isMobile ? <MobileNav /> : <Header />}
       
       <div className={`${isMobile ? 'pt-20' : 'pt-24'}`}>
+        {/* Search Bar at the top */}
+        <div className="container mx-auto px-4 pt-4 pb-6">
+          <AISearchBar />
+        </div>
+        
         {/* Hero Section */}
         <HeroSection />
         
         <div className="container mx-auto px-4 pb-16">
-          {/* Search Bar with AI Integration */}
-          <div data-intro="search" className="mb-12">
-            <AISearchBar />
-          </div>
-          
           {/* Quick Start Guide for new users */}
           <QuickStartGuide />
           
@@ -63,9 +63,7 @@ const Index = () => {
           <AreaStats />
           
           {/* FAQ Section */}
-          <div data-intro="faq">
-            <FAQ />
-          </div>
+          <FAQ />
         </div>
       </div>
       
