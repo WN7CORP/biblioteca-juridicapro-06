@@ -1,11 +1,12 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Sparkles, Loader2, X, Send, MapPin, Heart } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const AISearchBar = () => {
   const [query, setQuery] = useState('');
@@ -15,6 +16,9 @@ const AISearchBar = () => {
   const [aiResponse, setAiResponse] = useState('');
   const [activeTab, setActiveTab] = useState('search');
   const [animatingBookId, setAnimatingBookId] = useState<number | null>(null);
+  
+  // Debounce the search query
+  const debouncedQuery = useDebounce(query, 300);
   
   const {
     books,
@@ -33,33 +37,41 @@ const AISearchBar = () => {
     'default': 'Com base na sua pesquisa, encontrei conteúdos relevantes em nossa biblioteca jurídica. Use palavras-chave específicas para resultados mais precisos, como "responsabilidade civil", "licitações" ou "direitos fundamentais".'
   };
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  // Auto-search when debounced query changes
+  useEffect(() => {
+    if (debouncedQuery.trim() && debouncedQuery.length > 2) {
+      handleSearch();
+    }
+  }, [debouncedQuery]);
+
+  const handleSearch = useCallback(async () => {
+    if (!debouncedQuery.trim()) return;
+    
     setIsLoading(true);
     setShowResults(true);
     setActiveTab('results');
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Simulate API delay with better UX
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     // Filter books based on query - bring ALL matching results
     const filteredBooks = books.filter(book => 
-      book.livro.toLowerCase().includes(query.toLowerCase()) || 
-      book.area.toLowerCase().includes(query.toLowerCase())
+      book.livro.toLowerCase().includes(debouncedQuery.toLowerCase()) || 
+      book.area.toLowerCase().includes(debouncedQuery.toLowerCase())
     );
-    setResults(filteredBooks); // Show ALL results instead of limiting to 8
+    setResults(filteredBooks);
 
     // Generate AI response based on query
-    const queryLower = query.toLowerCase();
+    const queryLower = debouncedQuery.toLowerCase();
     let response = mockAIResponses.default;
     if (queryLower.includes('administrativo')) response = mockAIResponses.administrativo;
     else if (queryLower.includes('constitucional')) response = mockAIResponses.constitucional;
     else if (queryLower.includes('civil')) response = mockAIResponses.civil;
     setAiResponse(response);
     setIsLoading(false);
-  };
+  }, [debouncedQuery, books]);
 
-  const handleBookClick = (book: any) => {
+  const handleBookClick = useCallback((book: any) => {
     // Navigate to the book's category and highlight it
     const categoryUrl = `/categories/${encodeURIComponent(book.area)}`;
     navigate(categoryUrl, {
@@ -68,14 +80,20 @@ const AISearchBar = () => {
         searchQuery: query
       }
     });
-  };
+  }, [navigate, query]);
 
-  const handleFavoriteClick = async (e: React.MouseEvent, book: any) => {
+  const handleFavoriteClick = useCallback(async (e: React.MouseEvent, book: any) => {
     e.stopPropagation();
     
     try {
       // Trigger enhanced animation for mobile
       setAnimatingBookId(book.id);
+      
+      // Haptic feedback for mobile devices
+      if ('vibrate' in navigator) {
+        navigator.vibrate([50, 50, 50]);
+      }
+      
       setTimeout(() => setAnimatingBookId(null), 800);
       
       await toggleFavorite(book.id);
@@ -94,22 +112,22 @@ const AISearchBar = () => {
         duration: 3000,
       });
     }
-  };
+  }, [toggleFavorite, toast]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
       handleSearch();
     }
-  };
+  }, [handleSearch, isLoading]);
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setQuery('');
     setShowResults(false);
     setResults([]);
     setAiResponse('');
     setActiveTab('search');
     inputRef.current?.focus();
-  };
+  }, []);
 
   // Close results when clicking outside
   useEffect(() => {
@@ -125,12 +143,12 @@ const AISearchBar = () => {
   return (
     <div className="relative w-full mx-auto" ref={resultsRef}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-netflix-card border border-netflix-cardHover max-w-4xl mx-auto">
-          <TabsTrigger value="search" className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white">
+        <TabsList className="grid w-full grid-cols-2 bg-netflix-card border border-netflix-cardHover max-w-4xl mx-auto transition-smooth">
+          <TabsTrigger value="search" className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white transition-smooth">
             <Search className="mr-2" size={16} />
             Busca Inteligente
           </TabsTrigger>
-          <TabsTrigger value="results" disabled={!showResults} className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white disabled:opacity-50">
+          <TabsTrigger value="results" disabled={!showResults} className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white disabled:opacity-50 transition-smooth">
             <Sparkles className="mr-2" size={16} />
             Resultados IA
           </TabsTrigger>
@@ -138,9 +156,9 @@ const AISearchBar = () => {
 
         <TabsContent value="search" className="mt-4">
           <div className="relative max-w-4xl mx-auto">
-            <div className="flex items-center bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden transition-all duration-200 focus-within:border-netflix-accent">
+            <div className="flex items-center bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden transition-smooth focus-within:border-netflix-accent focus-within:shadow-lg focus-within:shadow-netflix-accent/20">
               <div className="flex items-center px-4 py-4">
-                <Sparkles className="text-netflix-accent mr-3" size={24} />
+                <Sparkles className="text-netflix-accent mr-3 animate-float" size={24} />
                 <span className="text-netflix-accent text-base font-medium whitespace-nowrap">Buscar</span>
               </div>
               
@@ -151,13 +169,13 @@ const AISearchBar = () => {
                 onChange={e => setQuery(e.target.value)} 
                 onKeyPress={handleKeyPress} 
                 placeholder="Digite o que você procura..." 
-                className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-4 py-4 text-base focus:outline-none min-w-0" 
+                className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-4 py-4 text-base focus:outline-none min-w-0 transition-smooth" 
               />
               
               {query && (
                 <button 
                   onClick={clearSearch} 
-                  className="p-3 text-netflix-secondary hover:text-white transition-colors"
+                  className="p-3 text-netflix-secondary hover:text-white transition-smooth hover:scale-110"
                 >
                   <X size={20} />
                 </button>
@@ -166,11 +184,18 @@ const AISearchBar = () => {
               <Button 
                 onClick={handleSearch} 
                 disabled={!query.trim() || isLoading} 
-                className="m-3 bg-netflix-accent hover:bg-netflix-accent/90 text-white rounded-lg px-6 py-3 transition-all duration-200 disabled:opacity-50"
+                className="m-3 bg-netflix-accent hover:bg-netflix-accent/90 text-white rounded-lg px-6 py-3 transition-bounce disabled:opacity-50"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
               </Button>
             </div>
+            
+            {/* Real-time search indicator */}
+            {query.length > 2 && (
+              <div className="text-center mt-2 text-netflix-secondary text-sm">
+                Busca automática ativada • Digite para encontrar livros
+              </div>
+            )}
           </div>
         </TabsContent>
 
@@ -192,26 +217,26 @@ const AISearchBar = () => {
                 {aiResponse && (
                   <div className="p-6 border-b border-netflix-cardHover bg-netflix-cardHover/30">
                     <div className="flex items-start mb-3">
-                      <Sparkles className="text-netflix-accent mt-1 mr-3 flex-shrink-0" size={20} />
+                      <Sparkles className="text-netflix-accent mt-1 mr-3 flex-shrink-0 animate-float" size={20} />
                       <span className="text-netflix-accent font-semibold text-lg">Análise da IA</span>
                     </div>
                     <p className="text-white text-lg leading-relaxed ml-8">{aiResponse}</p>
                   </div>
                 )}
                 
-                {/* Search Results - Compact List */}
+                {/* Search Results - Enhanced Compact List */}
                 {results.length > 0 && (
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-white text-lg font-semibold">
                         Livros encontrados ({results.length})
                       </h3>
-                      <span className="text-netflix-secondary text-sm">
+                      <span className="text-netflix-secondary text-sm animate-float">
                         Clique para ir até o livro
                       </span>
                     </div>
                     
-                    {/* Compact List View */}
+                    {/* Enhanced Compact List View */}
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {results.map((book, index) => {
                         const isAnimating = animatingBookId === book.id;
@@ -220,7 +245,7 @@ const AISearchBar = () => {
                           <div 
                             key={book.id} 
                             onClick={() => handleBookClick(book)}
-                            className="flex items-center p-3 rounded-lg hover:bg-netflix-cardHover transition-all duration-200 cursor-pointer group border border-transparent hover:border-netflix-accent animate-fade-in"
+                            className="flex items-center p-3 rounded-lg hover:bg-netflix-cardHover transition-bounce cursor-pointer group border border-transparent hover:border-netflix-accent animate-fade-in hover:shadow-lg"
                             style={{
                               animationDelay: `${index * 50}ms`,
                               animationFillMode: 'both'
@@ -229,15 +254,15 @@ const AISearchBar = () => {
                             <img 
                               src={book.imagem} 
                               alt={book.livro} 
-                              className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-200" 
+                              className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 group-hover:scale-105 transition-bounce shadow-md" 
                             />
                             
                             <div className="flex-1 min-w-0 mr-3">
-                              <h4 className="text-white font-medium text-sm line-clamp-1 group-hover:text-netflix-accent transition-colors">
+                              <h4 className="text-white font-medium text-sm line-clamp-1 group-hover:text-netflix-accent transition-smooth">
                                 {book.livro}
                               </h4>
                               <p className="text-netflix-secondary text-xs mt-1">{book.area}</p>
-                              <div className="flex items-center mt-1 text-xs text-netflix-accent">
+                              <div className="flex items-center mt-1 text-xs text-netflix-accent opacity-0 group-hover:opacity-100 transition-smooth">
                                 <MapPin size={10} className="mr-1" />
                                 <span>Ir para livro</span>
                               </div>
@@ -245,9 +270,9 @@ const AISearchBar = () => {
                             
                             <button
                               onClick={(e) => handleFavoriteClick(e, book)}
-                              className={`relative p-2 rounded-full transition-all duration-300 hover:scale-110 ${
+                              className={`relative p-2 rounded-full transition-bounce hover:scale-110 ${
                                 book.favorito 
-                                  ? 'bg-netflix-accent/90 backdrop-blur-sm' 
+                                  ? 'bg-netflix-accent/90 backdrop-blur-sm animate-glow' 
                                   : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
                               }`}
                             >
@@ -286,6 +311,9 @@ const AISearchBar = () => {
                 
                 {results.length === 0 && !isLoading && aiResponse && (
                   <div className="p-6 text-center">
+                    <div className="animate-float mb-4">
+                      <Sparkles size={48} className="mx-auto text-netflix-accent opacity-50" />
+                    </div>
                     <p className="text-netflix-secondary text-lg">Nenhum livro específico encontrado, mas a IA pode te ajudar!</p>
                   </div>
                 )}

@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Book } from '@/types';
 import BookCard from './BookCard';
-import BookCardSkeleton from './BookCardSkeleton';
+import EnhancedBookCardSkeleton from './EnhancedBookCardSkeleton';
 
 interface BookGridProps {
   books: Book[];
@@ -12,7 +12,7 @@ interface BookGridProps {
   highlightedBookId?: number | null;
 }
 
-const BookGrid: React.FC<BookGridProps> = ({ 
+const BookGrid: React.FC<BookGridProps> = memo(({ 
   books, 
   onBookClick, 
   title, 
@@ -25,7 +25,7 @@ const BookGrid: React.FC<BookGridProps> = ({
         {title && <h2 className="text-lg font-medium mb-3">{title}</h2>}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array.from({ length: 10 }).map((_, index) => (
-            <BookCardSkeleton key={index} />
+            <EnhancedBookCardSkeleton key={index} />
           ))}
         </div>
       </div>
@@ -35,7 +35,7 @@ const BookGrid: React.FC<BookGridProps> = ({
   if (books.length === 0) {
     return (
       <div className="text-center py-10 animate-fade-in">
-        <div className="w-24 h-24 mx-auto mb-4 bg-netflix-cardHover rounded-full flex items-center justify-center">
+        <div className="w-24 h-24 mx-auto mb-4 bg-netflix-cardHover rounded-full flex items-center justify-center animate-float">
           <div className="w-12 h-12 border-2 border-netflix-secondary rounded opacity-50" />
         </div>
         <p className="text-netflix-secondary text-lg mb-2">Nenhum livro encontrado</p>
@@ -56,7 +56,7 @@ const BookGrid: React.FC<BookGridProps> = ({
           <div
             key={book.id}
             data-book-id={book.id}
-            className={`${
+            className={`transition-smooth ${
               highlightedBookId === book.id 
                 ? 'ring-2 ring-netflix-accent ring-offset-2 ring-offset-netflix-background animate-pulse' 
                 : ''
@@ -72,6 +72,8 @@ const BookGrid: React.FC<BookGridProps> = ({
       </div>
     </div>
   );
-};
+});
+
+BookGrid.displayName = 'BookGrid';
 
 export default BookGrid;
