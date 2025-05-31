@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book, Note } from '../types';
 import { mockBooks, mockNotes } from '../data/mockData';
@@ -65,7 +66,19 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return mockBooks; // Fallback to mock data
       }
       
-      return data as Book[];
+      // Convert the data to match our Book interface
+      return data.map(book => ({
+        id: book.id,
+        area: book.area || '',
+        livro: book.livro || '',
+        link: book.link || '',
+        imagem: book.imagem || '',
+        sobre: book.sobre || '',
+        download: book.download || '',
+        favorito: false, // We'll set this based on user favorites
+        progresso: parseInt(book.progresso) || 0,
+        created_at: book.created_at
+      })) as Book[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
