@@ -62,16 +62,19 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
     setImageError(true);
   }, []);
 
+  // Determine image priority based on index (first few books get high priority)
+  const imagePriority = index < 6 ? 'high' : index < 12 ? 'normal' : 'low';
+
   return (
     <div 
-      className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-smooth hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent"
+      className="book-card relative bg-netflix-card rounded-lg overflow-hidden cursor-pointer transform transition-smooth hover:scale-105 hover:shadow-xl hover:shadow-black/20 animate-fade-in group border border-netflix-cardHover hover:border-netflix-accent flex flex-col h-full"
       onClick={onClick}
       style={{
         animationDelay: `${index * 50}ms`,
         animationFillMode: 'both'
       }}
     >
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         {imageError ? (
           <div className="w-full aspect-[2/3] bg-netflix-cardHover flex items-center justify-center">
             <div className="text-center p-4">
@@ -87,6 +90,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
             alt={book.livro}
             className="w-full aspect-[2/3]"
             onError={handleImageError}
+            priority={imagePriority}
           />
         )}
         
@@ -155,16 +159,20 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
         </div>
       </div>
       
-      <div className="p-3 transition-smooth group-hover:bg-netflix-cardHover">
-        <h3 className="text-sm font-medium line-clamp-2 transition-smooth group-hover:text-white">
-          {book.livro}
-        </h3>
-        <p className="text-xs text-netflix-secondary mt-1 transition-smooth group-hover:text-netflix-accent">
-          {book.area}
-        </p>
-        {/* Progress percentage if available */}
+      {/* Fixed height content area */}
+      <div className="flex flex-col flex-grow p-3 transition-smooth group-hover:bg-netflix-cardHover min-h-[80px]">
+        <div className="flex-grow">
+          <h3 className="text-sm font-medium line-clamp-2 transition-smooth group-hover:text-white mb-1">
+            {book.livro}
+          </h3>
+          <p className="text-xs text-netflix-secondary transition-smooth group-hover:text-netflix-accent">
+            {book.area}
+          </p>
+        </div>
+        
+        {/* Progress percentage if available - always at bottom */}
         {book.progresso > 0 && (
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-netflix-cardHover/30">
             <span className="text-xs text-netflix-secondary">
               {book.progresso}% lido
             </span>

@@ -23,7 +23,7 @@ const BookGrid: React.FC<BookGridProps> = memo(({
     return (
       <div className="mb-10">
         {title && <h2 className="text-lg font-medium mb-3">{title}</h2>}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-fr">
           {Array.from({ length: 10 }).map((_, index) => (
             <EnhancedBookCardSkeleton key={index} />
           ))}
@@ -51,12 +51,12 @@ const BookGrid: React.FC<BookGridProps> = memo(({
           {title}
         </h2>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 auto-rows-fr">
         {books.map((book, index) => (
           <div
             key={book.id}
             data-book-id={book.id}
-            className={`transition-smooth ${
+            className={`flex flex-col h-full transition-smooth ${
               highlightedBookId === book.id 
                 ? 'ring-2 ring-netflix-accent ring-offset-2 ring-offset-netflix-background animate-pulse' 
                 : ''

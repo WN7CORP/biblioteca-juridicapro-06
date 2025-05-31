@@ -1,32 +1,68 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Book } from 'lucide-react';
+import { useImageCache } from '@/hooks/useImageCache';
 
 interface LazyImageProps {
   src: string;
   alt: string;
   className?: string;
   onError?: () => void;
+  priority?: 'high' | 'normal' | 'low';
 }
 
-const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className = '', onError }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+const LazyImage: React.FC<LazyImageProps> = ({ 
+  src, 
+  alt, 
+  className = '', 
+  onError,
+  priority = 'normal'
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const { isLoaded, hasError, isLoading } = useImageCache(
+    isVisible ? src : '', 
+    priority
+  );
 
-  const handleLoad = useCallback(() => {
-    setIsLoading(false);
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        rootMargin: '50px', // Start loading 50px before the image enters viewport
+        threshold: 0.1
+      }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => {
+      if (imgRef.current) {
+        observer.unobserve(imgRef.current);
+      }
+    };
   }, []);
 
-  const handleError = useCallback(() => {
-    setIsLoading(false);
-    setHasError(true);
+  const handleImageError = useCallback(() => {
+    setImageLoadError(true);
     onError?.();
   }, [onError]);
 
   // Check if src is valid
   const isValidSrc = src && src !== '/placeholder.svg' && !src.includes('placeholder');
 
-  if (!isValidSrc || hasError) {
+  if (!isValidSrc || hasError || imageLoadError) {
     return (
       <div className={`${className} bg-netflix-cardHover flex items-center justify-center`}>
         <div className="text-center p-4">
@@ -38,20 +74,27 @@ const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className = '', onError
   }
 
   return (
-    <div className={`relative ${className}`}>
-      {isLoading && (
-        <div className="absolute inset-0 bg-netflix-cardHover animate-pulse flex items-center justify-center">
+    <div className={`relative ${className}`} ref={imgRef}>
+      {(isLoading || !isVisible) && (
+        <div className="absolute inset-0 bg-netflix-cardHover flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-netflix-accent border-t-transparent rounded-full animate-spin" />
         </div>
       )}
-      <img
-        src={src}
-        alt={alt}
-        className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300 object-cover`}
-        onLoad={handleLoad}
-        onError={handleError}
-        loading="lazy"
-      />
+      
+      {isVisible && (
+        <img
+          src={src}
+          alt={alt}
+          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 object-cover`}
+          onError={handleImageError}
+          loading="eager" // Since we're handling lazy loading ourselves
+          style={{
+            filter: isLoaded ? 'none' : 'blur(4px)',
+            transform: isLoaded ? 'scale(1)' : 'scale(1.02)',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        />
+      )}
     </div>
   );
 };
