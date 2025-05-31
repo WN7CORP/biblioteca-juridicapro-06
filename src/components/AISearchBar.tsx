@@ -11,6 +11,8 @@ import BookDetailsModal from '@/components/BookDetailsModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
+import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
@@ -29,6 +31,11 @@ const AISearchBar: React.FC = () => {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  
+  // New hooks for voice and scroll
+  const { speak, isPlaying } = useSpeechSynthesis();
+  const { scrollToResults } = useSmoothScroll();
 
   // Popular search suggestions
   const popularSearches = [
@@ -117,6 +124,19 @@ const AISearchBar: React.FC = () => {
           }
           
           setSearchResult(data.explanation || 'Livro encontrado com base na sua busca.');
+          
+          // Add voice narration and smooth scroll
+          setTimeout(async () => {
+            await speak('Ótimo! Encontrei alguns livros perfeitos para você. Vou mostrar os resultados agora.');
+            
+            // Smooth scroll to results after a short delay
+            setTimeout(() => {
+              if (resultsRef.current) {
+                scrollToResults(resultsRef.current);
+              }
+            }, 1000);
+          }, 500);
+          
         } else {
           fallbackBookSearch(aiQuery);
         }
@@ -159,8 +179,21 @@ const AISearchBar: React.FC = () => {
       setRelatedBooks(sameAreaBooks);
       
       setSearchResult(`Encontrei este livro de ${mainBook.area} que corresponde à sua busca.`);
+      
+      // Add voice narration and smooth scroll for fallback too
+      setTimeout(async () => {
+        await speak('Encontrei um livro que pode te interessar. Vou mostrar para você.');
+        
+        setTimeout(() => {
+          if (resultsRef.current) {
+            scrollToResults(resultsRef.current);
+          }
+        }, 1000);
+      }, 500);
+      
     } else {
       setSearchResult('Não encontrei livros correspondentes. Tente termos mais gerais como "Civil", "Penal" ou "Constitucional".');
+      speak('Não encontrei livros para essa busca. Tente termos mais gerais.');
     }
   };
 
@@ -270,9 +303,10 @@ const AISearchBar: React.FC = () => {
                   <Button
                     onClick={startAISearch}
                     className="bg-netflix-accent hover:bg-[#c11119] px-6 h-12 font-semibold"
+                    disabled={isPlaying}
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Buscar IA
+                    {isPlaying ? 'Falando...' : 'Buscar IA'}
                   </Button>
                 </div>
               </DrawerTrigger>
@@ -283,6 +317,12 @@ const AISearchBar: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white flex items-center">
                       <Sparkles className="mr-2 text-netflix-accent" size={20} />
                       Busca Inteligente
+                      {isPlaying && (
+                        <div className="ml-2 flex items-center text-sm text-netflix-accent">
+                          <div className="w-2 h-2 bg-netflix-accent rounded-full animate-pulse mr-1"></div>
+                          Narrando...
+                        </div>
+                      )}
                     </h3>
                     
                     <ScrollArea className="flex-1 min-h-0 h-full w-full pr-2">
@@ -295,16 +335,16 @@ const AISearchBar: React.FC = () => {
                             value={aiQuery}
                             onChange={(e) => setAiQuery(e.target.value)}
                             className="flex-grow bg-netflix-card border-netflix-cardHover text-xs"
-                            disabled={isSearching}
+                            disabled={isSearching || isPlaying}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && aiQuery.trim() && !isSearching) {
+                              if (e.key === 'Enter' && aiQuery.trim() && !isSearching && !isPlaying) {
                                 e.preventDefault();
                                 handleAISearch();
                               }
                             }}
                           />
                           <Button 
-                            disabled={!aiQuery.trim() || isSearching}
+                            disabled={!aiQuery.trim() || isSearching || isPlaying}
                             onClick={handleAISearch}
                             className="bg-netflix-accent hover:bg-[#c11119] text-xs"
                             size="sm"
@@ -320,9 +360,12 @@ const AISearchBar: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Main result - IMPROVED PRESENTATION */}
+                        {/* Main result - IMPROVED PRESENTATION with smooth animations */}
                         {matchedBooks.length > 0 && (
-                          <div className="space-y-3 mb-6 bg-gradient-to-r from-[#1a1a1a] to-[#2a1a1a] rounded-xl p-6 border-l-4 border-netflix-accent animate-book-entrance shadow-lg">
+                          <div 
+                            ref={resultsRef}
+                            className="space-y-3 mb-6 bg-gradient-to-r from-[#1a1a1a] to-[#2a1a1a] rounded-xl p-6 border-l-4 border-netflix-accent animate-smooth-entrance shadow-lg"
+                          >
                             <div className="flex items-center mb-4">
                               <BookOpen className="mr-2 text-netflix-accent" size={20} />
                               <h4 className="font-bold text-white text-lg">📚 Resultado Principal</h4>
@@ -331,18 +374,19 @@ const AISearchBar: React.FC = () => {
                               <div 
                                 key={book.id}
                                 onClick={() => handleBookClick(book)}
-                                className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-xl overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:shadow-xl flex p-4"
+                                className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-500 rounded-xl overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:shadow-xl flex p-4 animate-book-reveal"
+                                style={{ animationDelay: `${idx * 200}ms` }}
                               >
                                 <div className="w-24 h-32 overflow-hidden rounded-lg shadow-md flex-shrink-0">
                                   <img 
                                     src={book.imagem} 
                                     alt={book.livro} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                   />
                                 </div>
                                 <div className="flex-grow pl-4 flex flex-col justify-between">
                                   <div>
-                                    <h5 className="font-bold text-netflix-accent line-clamp-2 text-base mb-2 group-hover:text-white transition-colors">{book.livro}</h5>
+                                    <h5 className="font-bold text-netflix-accent line-clamp-2 text-base mb-2 group-hover:text-white transition-colors duration-300">{book.livro}</h5>
                                     <Badge variant="secondary" className="mb-2 bg-netflix-accent/20 text-netflix-accent border-netflix-accent/30">
                                       {book.area}
                                     </Badge>
@@ -353,14 +397,14 @@ const AISearchBar: React.FC = () => {
                                   <div className="flex items-center justify-between mt-4">
                                     <Button
                                       onClick={() => handleBookClick(book)}
-                                      className="bg-netflix-accent hover:bg-[#c11119] text-white text-sm px-4 py-2"
+                                      className="bg-netflix-accent hover:bg-[#c11119] text-white text-sm px-4 py-2 transform hover:scale-105 transition-all duration-200"
                                       size="sm"
                                     >
                                       Ver detalhes
                                     </Button>
                                     <button
                                       onClick={(e) => handleFavoriteClick(e, book)}
-                                      className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+                                      className={`p-2 rounded-full transition-all duration-300 hover:scale-110 ${
                                         book.favorito 
                                           ? 'bg-netflix-accent/90 backdrop-blur-sm' 
                                           : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
@@ -368,7 +412,7 @@ const AISearchBar: React.FC = () => {
                                     >
                                       <Heart 
                                         size={18} 
-                                        className={`transition-all duration-200 ${
+                                        className={`transition-all duration-300 ${
                                           book.favorito 
                                             ? 'text-white fill-white' 
                                             : 'text-white hover:text-netflix-accent'
@@ -384,7 +428,7 @@ const AISearchBar: React.FC = () => {
 
                         {/* Related books - IMPROVED PRESENTATION */}
                         {relatedBooks.length > 0 && (
-                          <div className="space-y-3 bg-gradient-to-r from-[#1a1a1a] to-[#151c2a] rounded-xl p-6 border-l-4 border-blue-500 animate-book-entrance shadow-lg">
+                          <div className="space-y-3 bg-gradient-to-r from-[#1a1a1a] to-[#151c2a] rounded-xl p-6 border-l-4 border-blue-500 animate-smooth-entrance shadow-lg">
                             <div className="flex items-center mb-4">
                               <Sparkles className="mr-2 text-blue-400" size={20} />
                               <h4 className="font-bold text-white text-lg">🔗 Livros Relacionados</h4>
@@ -394,8 +438,8 @@ const AISearchBar: React.FC = () => {
                                 <div 
                                   key={book.id}
                                   onClick={() => handleBookClick(book)}
-                                  className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex p-3"
-                                  style={{ animationDelay: `${idx * 100}ms` }}
+                                  className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex p-3 animate-book-reveal"
+                                  style={{ animationDelay: `${(idx + 1) * 150}ms` }}
                                 >
                                   <div className="w-16 h-20 overflow-hidden rounded flex-shrink-0">
                                     <img 
@@ -577,14 +621,44 @@ const AISearchBar: React.FC = () => {
             100% { opacity: 1; transform: translateY(0); }
           }
           
-          .animate-book-entrance {
-            animation: book-entrance 0.6s ease-out forwards;
+          .animate-smooth-entrance {
+            animation: smooth-entrance 0.8s ease-out forwards;
           }
           
-          @keyframes book-entrance {
-            0% { opacity: 0; transform: translateY(-20px); }
-            60% { transform: translateY(5px); }
-            100% { opacity: 1; transform: translateY(0); }
+          @keyframes smooth-entrance {
+            0% { 
+              opacity: 0; 
+              transform: translateY(-30px) scale(0.95); 
+            }
+            50% { 
+              opacity: 0.7; 
+              transform: translateY(10px) scale(1.02); 
+            }
+            100% { 
+              opacity: 1; 
+              transform: translateY(0) scale(1); 
+            }
+          }
+          
+          .animate-book-reveal {
+            animation: book-reveal 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          
+          @keyframes book-reveal {
+            0% { 
+              opacity: 0; 
+              transform: translateX(-20px) scale(0.95); 
+            }
+            60% { 
+              opacity: 0.8; 
+              transform: translateX(5px) scale(1.02); 
+            }
+            100% { 
+              opacity: 1; 
+              transform: translateX(0) scale(1); 
+            }
           }
           
           .book-card {
