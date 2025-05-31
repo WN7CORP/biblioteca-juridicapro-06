@@ -24,7 +24,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
     try {
       console.log('Favoriting book:', book.id, 'Current status:', book.favorito);
       
-      // Enhanced animation for mobile - trigger immediately
+      // Set animation IMMEDIATELY before any async operations
       setIsAnimating(true);
       
       // Haptic feedback for mobile devices
@@ -32,20 +32,21 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
         navigator.vibrate(50);
       }
       
-      // Reset animation after duration
-      const animationTimeout = setTimeout(() => setIsAnimating(false), 800);
+      // Execute the favorite toggle (async)
+      const favoritePromise = toggleFavorite(book.id);
       
-      // Execute the favorite toggle
-      await toggleFavorite(book.id);
-      
+      // Show immediate feedback with toast
       toast({
         title: book.favorito ? "Removido dos favoritos" : "❤️ Adicionado aos favoritos",
         description: book.livro,
         duration: 2000,
       });
       
-      // Cleanup timeout
-      return () => clearTimeout(animationTimeout);
+      // Wait for the operation to complete
+      await favoritePromise;
+      
+      // Reset animation after fixed duration
+      setTimeout(() => setIsAnimating(false), 800);
     } catch (error) {
       console.error('Erro ao favoritar:', error);
       setIsAnimating(false); // Reset animation on error
@@ -85,17 +86,28 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
             </div>
           </div>
         ) : (
-          <LazyImage 
-            src={book.imagem} 
-            alt={book.livro}
-            className="w-full aspect-[2/3]"
-            onError={handleImageError}
-            priority={imagePriority}
-          />
+          <>
+            <LazyImage 
+              src={book.imagem} 
+              alt={book.livro}
+              className="w-full aspect-[2/3]"
+              onError={handleImageError}
+              priority={imagePriority}
+            />
+            
+            {/* Título estrategicamente posicionado na capa */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2 mb-1 drop-shadow-lg">
+                  {book.livro}
+                </h3>
+                <p className="text-netflix-accent text-xs font-medium drop-shadow-lg">
+                  {book.area}
+                </p>
+              </div>
+            </div>
+          </>
         )}
-        
-        {/* Overlay gradient for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         <button
           onClick={handleFavoriteClick}
@@ -151,16 +163,16 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
           </div>
         )}
 
-        {/* Quick action overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+        {/* Quick action overlay - only on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40">
           <div className="bg-white/10 backdrop-blur-sm rounded-full p-3 transform scale-75 group-hover:scale-100 transition-bounce">
             <div className="text-white text-sm font-medium">Ver detalhes</div>
           </div>
         </div>
       </div>
       
-      {/* Fixed height content area */}
-      <div className="flex flex-col flex-grow p-3 transition-smooth group-hover:bg-netflix-cardHover min-h-[80px]">
+      {/* Compact bottom info - fallback for when hover is not available */}
+      <div className="flex flex-col flex-grow p-3 transition-smooth group-hover:bg-netflix-cardHover min-h-[80px] sm:group-hover:opacity-50">
         <div className="flex-grow">
           <h3 className="text-sm font-medium line-clamp-2 transition-smooth group-hover:text-white mb-1">
             {book.livro}

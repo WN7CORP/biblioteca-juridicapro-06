@@ -4,6 +4,7 @@ import { mockBooks, mockNotes } from '../data/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fuzzySearch, searchWithScore } from '@/utils/searchUtils';
 
 interface LibraryContextProps {
   books: Book[];
@@ -263,14 +264,18 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     favorito: favorites.includes(book.id)
   }));
 
-  // Filter books based on selected area and search term
+  // Filter books based on selected area and search term with fuzzy search
   const filteredBooks = enhancedBooks.filter(book => {
     const matchesArea = selectedArea ? book.area === selectedArea : true;
-    const matchesSearch = searchTerm
-      ? book.livro.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        book.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.sobre.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+    
+    if (!searchTerm) return matchesArea;
+    
+    // Use fuzzy search for better matching
+    const matchesSearch = 
+      fuzzySearch(searchTerm, book.livro, 0.6) ||
+      fuzzySearch(searchTerm, book.area, 0.6) ||
+      fuzzySearch(searchTerm, book.sobre, 0.6);
+    
     return matchesArea && matchesSearch;
   });
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Sparkles, Loader2, X, Send, MapPin, Heart } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { searchWithScore } from '@/utils/searchUtils';
 
 const AISearchBar = () => {
   const [query, setQuery] = useState('');
@@ -43,12 +43,15 @@ const AISearchBar = () => {
     // Simulate API delay with better UX
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Filter books based on query - bring ALL matching results
-    const filteredBooks = books.filter(book => 
-      book.livro.toLowerCase().includes(query.toLowerCase()) || 
-      book.area.toLowerCase().includes(query.toLowerCase())
+    // Use fuzzy search with scoring
+    const searchResults = searchWithScore(
+      books,
+      query,
+      (book) => `${book.livro} ${book.area} ${book.sobre}`,
+      0.5 // Lower threshold for more inclusive results
     );
-    setResults(filteredBooks);
+    
+    setResults(searchResults.map(result => result.item));
 
     // Generate AI response based on query
     const queryLower = query.toLowerCase();
@@ -56,6 +59,12 @@ const AISearchBar = () => {
     if (queryLower.includes('administrativo')) response = mockAIResponses.administrativo;
     else if (queryLower.includes('constitucional')) response = mockAIResponses.constitucional;
     else if (queryLower.includes('civil')) response = mockAIResponses.civil;
+    
+    // Add fuzzy search hint if we found results with fuzzy matching
+    if (searchResults.some(r => r.matchType === 'fuzzy')) {
+      response += ' (Alguns resultados foram encontrados usando busca aproximada para melhor correspondência.)';
+    }
+    
     setAiResponse(response);
     setIsLoading(false);
   }, [query, books]);
@@ -75,7 +84,7 @@ const AISearchBar = () => {
     e.stopPropagation();
     
     try {
-      // Trigger enhanced animation for mobile
+      // Trigger enhanced animation for mobile - SET IMMEDIATELY
       setAnimatingBookId(book.id);
       
       // Haptic feedback for mobile devices
@@ -83,6 +92,7 @@ const AISearchBar = () => {
         navigator.vibrate([50, 50, 50]);
       }
       
+      // Clear animation after fixed duration
       setTimeout(() => setAnimatingBookId(null), 800);
       
       await toggleFavorite(book.id);
@@ -94,6 +104,7 @@ const AISearchBar = () => {
       });
     } catch (error) {
       console.error('Erro ao favoritar:', error);
+      setAnimatingBookId(null); // Reset on error
       toast({
         title: "Erro",
         description: "Não foi possível atualizar favoritos. Tente novamente.",
@@ -168,7 +179,7 @@ const AISearchBar = () => {
                   value={query} 
                   onChange={e => setQuery(e.target.value)} 
                   onKeyPress={handleKeyPress} 
-                  placeholder="Digite o que você procura..." 
+                  placeholder="Digite o que você procura... (tolerante a erros de digitação)" 
                   className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base focus:outline-none min-w-0 transition-smooth" 
                 />
                 
@@ -192,7 +203,7 @@ const AISearchBar = () => {
               
               {/* Search hint */}
               <div className="text-center mt-3 text-netflix-secondary text-xs sm:text-sm">
-                Clique em "Buscar" para encontrar livros jurídicos
+                Busca inteligente - encontra livros mesmo com erros de digitação
               </div>
             </div>
           </TabsContent>
