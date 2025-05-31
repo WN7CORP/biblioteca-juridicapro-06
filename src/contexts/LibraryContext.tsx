@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book, Note } from '../types';
 import { mockBooks, mockNotes } from '../data/mockData';
@@ -63,14 +62,13 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       if (error) {
         console.error('Error fetching books:', error);
-        // Don't show toast immediately, let component handle it
         return mockBooks; // Fallback to mock data
       }
       
       return data as Book[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
     retry: 2,
     retryDelay: 1000,
   });

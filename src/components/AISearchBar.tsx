@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Loader2 } from 'lucide-react';
+import { Search, BookOpen, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -15,150 +15,91 @@ import { supabase } from '@/integrations/supabase/client';
 const AISearchBar: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [showAISearch, setShowAISearch] = useState(true); // Default to AI search
-  const [aiConversation, setAiConversation] = useState<string[]>([]);
+  const [showAISearch, setShowAISearch] = useState(true);
   const [matchedBooks, setMatchedBooks] = useState<Book[]>([]);
+  const [relatedBooks, setRelatedBooks] = useState<Book[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<string>('');
-  const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookModal, setShowBookModal] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [searchResult, setSearchResult] = useState<string>('');
   const { books, setSelectedArea, setSearchTerm } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Define guided questions for the AI search - each question will only be asked once
-  const questions = [
-    "Que área do direito você deseja estudar? (ex: Civil, Penal, Constitucional)",
-    "Há algum tema específico dentro dessa área?",
-    "Qual seu objetivo com esse estudo? (ex: concurso, OAB, faculdade)"
-  ];
-
-  useEffect(() => {
-    if (questionIndex < questions.length) {
-      setCurrentQuestion(questions[questionIndex]);
-    }
-  }, [questionIndex]);
-
-  // Scroll to the end of conversation when it updates
+  // Scroll to the end when content updates
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [aiConversation]);
+  }, [matchedBooks, relatedBooks, searchResult]);
 
   const startAISearch = () => {
-    setShowAISearch(true);
-    setAiConversation([]);
-    setMatchedBooks([]);
-    setQuestionIndex(0);
-    setCurrentQuestion(questions[0]);
     setIsDrawerOpen(true);
-  }
-
-  const handleNextQuestion = async (response: string) => {
-    if (!response.trim()) return; // Ignore empty responses
-    
-    setIsSearching(true);
-    
-    // Create a new conversation array and add user's response
-    const newConversation = [...aiConversation];
-    const userMessage = `Você: ${response}`;
-    
-    // Prevent duplicates by checking if the last message is the same
-    if (newConversation.length === 0 || newConversation[newConversation.length - 1] !== userMessage) {
-      newConversation.push(userMessage);
-      setAiConversation(newConversation);
-    }
-    
-    setIsTyping(true);
-    
-    // Simulate AI thinking delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    if (questionIndex < questions.length - 1) {
-      // Move to next question
-      const nextIndex = questionIndex + 1;
-      setQuestionIndex(nextIndex);
-      
-      // Add the assistant's next question
-      const assistantMessage = `Assistente: ${questions[nextIndex]}`;
-      
-      // Check if this message is already in conversation to prevent duplicates
-      if (!newConversation.includes(assistantMessage)) {
-        newConversation.push(assistantMessage);
-        setAiConversation(newConversation);
-      }
-    } else {
-      // Final question answered, search for books
-      const allResponses = [...aiConversation.map(m => m.replace(/^(Você:|Assistente:)\s/, "")), response].join(' ');
-      await searchBooks(allResponses);
-    }
-    
-    setIsSearching(false);
-    setIsTyping(false);
-    setAiQuery('');
   };
 
-  const searchBooks = async (query: string) => {
+  const handleAISearch = async () => {
+    if (!aiQuery.trim()) {
+      toast({
+        title: 'Atenção',
+        description: 'Digite algo para buscar.',
+        variant: 'default',
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    setMatchedBooks([]);
+    setRelatedBooks([]);
+    setSearchResult('');
+
     try {
-      setIsTyping(true);
-      
-      // Use Gemini AI for more intelligent book matching via our legal-assistant edge function
       const userIp = localStorage.getItem('bibjuridica_user_id') || `demo-${Math.floor(Math.random() * 1000000)}`;
       
       const { data, error } = await supabase.functions.invoke('legal-assistant', {
         body: {
           action: 'find-books',
-          query: query,
+          query: aiQuery,
           userIp,
           bookId: null
         },
       });
-      
-      setIsTyping(false);
-      
+
       if (error) throw new Error(error.message);
       
       if (data && data.success) {
-        // Extract book IDs from the response
         const bookIds = data.bookIds || [];
+        const relatedIds = data.relatedBookIds || [];
         
         if (bookIds.length > 0) {
-          // Find the matching books from our local books array
           const matchingBooks = books.filter(book => bookIds.includes(book.id));
+          setMatchedBooks(matchingBooks.slice(0, 1)); // Show only main result
           
-          if (matchingBooks.length > 0) {
-            setMatchedBooks(matchingBooks);
-            
-            setAiConversation(prev => [
-              ...prev, 
-              `Assistente: Baseado no que você me disse, encontrei ${matchingBooks.length} ${matchingBooks.length === 1 ? 'livro' : 'livros'} que podem te ajudar:`
-            ]);
-          } else {
-            fallbackBookSearch(query);
+          // Get related books
+          if (relatedIds.length > 0) {
+            const relatedBooksData = books.filter(book => relatedIds.includes(book.id));
+            setRelatedBooks(relatedBooksData.slice(0, 4)); // Show up to 4 related
           }
+          
+          setSearchResult(data.explanation || 'Livro encontrado com base na sua busca.');
         } else {
-          fallbackBookSearch(query);
+          fallbackBookSearch(aiQuery);
         }
       } else {
-        fallbackBookSearch(query);
+        fallbackBookSearch(aiQuery);
       }
     } catch (error) {
       console.error('Error with AI book search:', error);
-      fallbackBookSearch(query);
+      fallbackBookSearch(aiQuery);
+    } finally {
+      setIsSearching(false);
     }
   };
-  
-  // Fallback to simple keyword matching if AI search fails
+
+  // Enhanced fallback search
   const fallbackBookSearch = (query: string) => {
-    // Simple keyword matching
     const keywords = query.toLowerCase().split(/\s+/);
     const matches = books.map(book => {
-      // Calculate a simple relevance score based on keyword matches
       let score = 0;
       keywords.forEach(keyword => {
         if (book.livro.toLowerCase().includes(keyword)) score += 3;
@@ -168,25 +109,23 @@ const AISearchBar: React.FC = () => {
       return { book, score };
     });
     
-    // Sort by relevance and get top matches
     const sortedMatches = matches
       .filter(match => match.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5); // Get top 5 matches
+      .sort((a, b) => b.score - a.score);
     
     if (sortedMatches.length > 0) {
-      const matchingBooks = sortedMatches.map(match => match.book);
-      setMatchedBooks(matchingBooks);
+      setMatchedBooks([sortedMatches[0].book]); // Main result
       
-      setAiConversation(prev => [
-        ...prev, 
-        `Assistente: Baseado no que você me disse, encontrei ${matchingBooks.length} ${matchingBooks.length === 1 ? 'livro' : 'livros'} que podem te ajudar:`
-      ]);
+      // Get related books from same area
+      const mainBook = sortedMatches[0].book;
+      const sameAreaBooks = books
+        .filter(book => book.area === mainBook.area && book.id !== mainBook.id)
+        .slice(0, 4);
+      setRelatedBooks(sameAreaBooks);
+      
+      setSearchResult(`Encontrei este livro de ${mainBook.area} que corresponde à sua busca.`);
     } else {
-      setAiConversation(prev => [
-        ...prev, 
-        `Assistente: Não encontrei livros que correspondam exatamente à sua busca. Tente usar termos mais gerais ou outra área do direito.`
-      ]);
+      setSearchResult('Não encontrei livros correspondentes. Tente termos mais gerais como "Civil", "Penal" ou "Constitucional".');
     }
   };
 
@@ -201,21 +140,16 @@ const AISearchBar: React.FC = () => {
   };
 
   const handleBookSelection = (book: Book) => {
-    // Close drawer
     setIsDrawerOpen(false);
     setShowBookModal(false);
-    
-    // Reset states
     setSelectedArea(null);
     setSearchTerm('');
     
-    // Show toast
     toast({
       title: "Livro selecionado",
       description: book.livro,
     });
     
-    // Navigate to book details
     navigate(`/read/${book.id}`);
   };
 
@@ -229,7 +163,7 @@ const AISearchBar: React.FC = () => {
           onClick={() => setShowAISearch(!showAISearch)}
           className="text-netflix-secondary hover:text-netflix-accent"
         >
-          {showAISearch ? "Busca simples" : "Busca por IA"}
+          {showAISearch ? "Busca simples" : "Busca IA"}
         </Button>
       </div>
       
@@ -241,24 +175,25 @@ const AISearchBar: React.FC = () => {
                 <div className="relative flex-grow">
                   <Input
                     type="text"
-                    placeholder="Descreva o que você quer estudar..."
+                    placeholder="Ex: livro sobre contratos, direito penal..."
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     className="bg-netflix-card border-netflix-accent border-2 text-sm w-full pr-10"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && aiQuery.trim()) {
                         e.preventDefault();
-                        handleNextQuestion(aiQuery);
+                        handleAISearch();
                       }
                     }}
                   />
-                  <BookOpen className="absolute right-3 top-1/2 -translate-y-1/2 text-netflix-accent" size={16} />
+                  <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 text-netflix-accent" size={16} />
                 </div>
                 <Button
                   onClick={startAISearch}
                   className="bg-netflix-accent hover:bg-[#c11119] min-w-[100px] font-bold"
                 >
-                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "IA Busca"}
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Buscar
                 </Button>
               </div>
             </DrawerTrigger>
@@ -267,76 +202,106 @@ const AISearchBar: React.FC = () => {
               <div className="flex flex-col h-[80vh] max-h-[80vh]">
                 <div className="p-4 space-y-4 flex-1 overflow-hidden flex flex-col">
                   <h3 className="text-lg font-semibold text-white flex items-center">
-                    <BookOpen className="mr-2 text-netflix-accent" size={20} />
-                    Assistente de Busca
+                    <Sparkles className="mr-2 text-netflix-accent" size={20} />
+                    Busca Inteligente
                   </h3>
                   
-                  {/* Book recommendations - Show at the top when available with animation */}
-                  {matchedBooks.length > 0 && (
-                    <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-book-entrance">
-                      <h4 className="font-medium text-white text-lg mb-2">Livros Recomendados</h4>
-                      <p className="text-sm text-netflix-text mb-3">
-                        Com base nas suas respostas, selecionei os seguintes materiais que podem ajudar no seu estudo:
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-x-auto">
-                        {matchedBooks.map((book, idx) => (
-                          <div 
-                            key={book.id}
-                            onClick={() => handleBookClick(book)}
-                            className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex"
-                            style={{ animationDelay: `${idx * 150}ms` }}
-                          >
-                            <div className="w-1/3 overflow-hidden">
-                              <img 
-                                src={book.imagem} 
-                                alt={book.livro} 
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="p-3 flex-grow flex flex-col">
-                              <h5 className="font-medium text-netflix-accent line-clamp-2">{book.livro}</h5>
-                              <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
-                              <p className="text-xs mt-2 line-clamp-2 text-netflix-text flex-grow">
-                                {book.sobre || 'Material didático recomendado para seu estudo.'}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Conversation history in a scrollable area with improved scrolling */}
-                  <ScrollArea className="flex-1 min-h-0 h-full w-full pr-2" style={{ overflow: 'auto' }}>
+                  <ScrollArea className="flex-1 min-h-0 h-full w-full pr-2">
                     <div className="space-y-4 pb-4">
-                      {aiConversation.map((message, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`${
-                            message.startsWith('Assistente:') 
-                              ? 'bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in'
-                              : 'bg-netflix-card text-right ml-12 p-2 rounded-lg animate-fade-in'
-                          }`}
+                      {/* Search input */}
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Digite o que você procura..."
+                          value={aiQuery}
+                          onChange={(e) => setAiQuery(e.target.value)}
+                          className="flex-grow bg-netflix-card border-netflix-cardHover text-xs"
+                          disabled={isSearching}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && aiQuery.trim() && !isSearching) {
+                              e.preventDefault();
+                              handleAISearch();
+                            }
+                          }}
+                        />
+                        <Button 
+                          disabled={!aiQuery.trim() || isSearching}
+                          onClick={handleAISearch}
+                          className="bg-netflix-accent hover:bg-[#c11119] text-xs"
+                          size="sm"
                         >
-                          <p className="text-xs text-netflix-secondary mb-1">
-                            {message.startsWith('Assistente:') ? 'Assistente' : 'Você'}
-                          </p>
-                          <p className={message.startsWith('Assistente:') ? 'text-netflix-text' : 'text-sm'}>
-                            {message.replace(/^(Assistente:|Você:)\s/, '')}
-                          </p>
-                        </div>
-                      ))}
-                      
-                      {questionIndex < questions.length && currentQuestion && !isTyping && (
-                        <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
-                          <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
-                          <p className="text-netflix-text">{currentQuestion}</p>
+                          {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+                        </Button>
+                      </div>
+
+                      {/* Search result explanation */}
+                      {searchResult && (
+                        <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-netflix-accent animate-fade-in">
+                          <p className="text-sm text-netflix-text">{searchResult}</p>
                         </div>
                       )}
-                      
-                      {isTyping && (
+
+                      {/* Main result */}
+                      {matchedBooks.length > 0 && (
+                        <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-book-entrance">
+                          <h4 className="font-medium text-white text-base mb-2">📚 Resultado Principal</h4>
+                          {matchedBooks.map((book, idx) => (
+                            <div 
+                              key={book.id}
+                              onClick={() => handleBookClick(book)}
+                              className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex"
+                            >
+                              <div className="w-1/4 overflow-hidden">
+                                <img 
+                                  src={book.imagem} 
+                                  alt={book.livro} 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="p-3 flex-grow flex flex-col">
+                                <h5 className="font-medium text-netflix-accent line-clamp-2 text-sm">{book.livro}</h5>
+                                <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                                <p className="text-xs mt-2 line-clamp-3 text-netflix-text flex-grow">
+                                  {book.sobre || 'Material jurídico especializado para estudo e consulta.'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Related books */}
+                      {relatedBooks.length > 0 && (
+                        <div className="space-y-3 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-blue-500 animate-book-entrance">
+                          <h4 className="font-medium text-white text-base mb-2">🔗 Livros Relacionados</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {relatedBooks.map((book, idx) => (
+                              <div 
+                                key={book.id}
+                                onClick={() => handleBookClick(book)}
+                                className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex"
+                                style={{ animationDelay: `${idx * 100}ms` }}
+                              >
+                                <div className="w-1/3 overflow-hidden">
+                                  <img 
+                                    src={book.imagem} 
+                                    alt={book.livro} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="p-2 flex-grow flex flex-col">
+                                  <h5 className="font-medium text-blue-400 line-clamp-2 text-xs">{book.livro}</h5>
+                                  <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {isSearching && (
                         <div className="bg-[#232323] p-3 rounded-lg border-l-2 border-netflix-accent animate-fade-in">
-                          <p className="text-xs text-netflix-secondary mb-1">Assistente</p>
+                          <p className="text-xs text-netflix-secondary mb-1">IA</p>
                           <div className="typing-indicator ml-2 my-2">
                             <span className="dot"></span>
                             <span className="dot"></span>
@@ -344,41 +309,15 @@ const AISearchBar: React.FC = () => {
                           </div>
                         </div>
                       )}
+
                       <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
-                  
-                  {/* Input area */}
-                  {(questionIndex < questions.length || isTyping) && (
-                    <div className="flex gap-2 mt-4">
-                      <Input
-                        type="text"
-                        placeholder="Sua resposta..."
-                        value={aiQuery}
-                        onChange={(e) => setAiQuery(e.target.value)}
-                        className="flex-grow bg-netflix-card border-netflix-cardHover"
-                        disabled={isTyping || isSearching}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && aiQuery.trim() && !isTyping && !isSearching) {
-                            e.preventDefault();
-                            handleNextQuestion(aiQuery);
-                          }
-                        }}
-                      />
-                      <Button 
-                        disabled={!aiQuery.trim() || isSearching || isTyping}
-                        onClick={() => handleNextQuestion(aiQuery)}
-                        className="bg-netflix-accent hover:bg-[#c11119]"
-                      >
-                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
-                      </Button>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="flex justify-end p-4 border-t border-netflix-cardHover">
                   <DrawerClose asChild>
-                    <Button variant="outline">Fechar</Button>
+                    <Button variant="outline" size="sm">Fechar</Button>
                   </DrawerClose>
                 </div>
               </div>
@@ -386,7 +325,7 @@ const AISearchBar: React.FC = () => {
           </Drawer>
           
           <p className="text-xs text-netflix-accent mt-1 font-semibold">
-            Utilize nossa IA para encontrar o material jurídico ideal para você ✨
+            🤖 Busca inteligente: digite o que procura e encontre o livro ideal
           </p>
         </div>
       ) : (
@@ -402,7 +341,6 @@ const AISearchBar: React.FC = () => {
         </div>
       )}
       
-      {/* Book details modal for recommended books */}
       <BookDetailsModal 
         book={selectedBook} 
         isOpen={showBookModal} 
@@ -418,11 +356,11 @@ const AISearchBar: React.FC = () => {
           
           .dot {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background-color: #e50914;
-            margin-right: 4px;
+            margin-right: 3px;
             animation: pulse 1.4s infinite ease-in-out;
           }
           
@@ -439,18 +377,12 @@ const AISearchBar: React.FC = () => {
             25%, 75% { transform: scale(0.8); opacity: 0.6; }
           }
           
-          @keyframes fade-in {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          
           .animate-fade-in {
             animation: fade-in 0.3s ease-out;
           }
           
-          @keyframes book-entrance {
-            0% { opacity: 0; transform: translateY(-20px); }
-            60% { transform: translateY(10px); }
+          @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(10px); }
             100% { opacity: 1; transform: translateY(0); }
           }
           
@@ -458,14 +390,20 @@ const AISearchBar: React.FC = () => {
             animation: book-entrance 0.6s ease-out forwards;
           }
           
+          @keyframes book-entrance {
+            0% { opacity: 0; transform: translateY(-20px); }
+            60% { transform: translateY(5px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          
           .book-card {
             animation: book-zoom-in 0.5s ease-out forwards;
             opacity: 0;
-            transform: scale(0.8);
+            transform: scale(0.95);
           }
           
           @keyframes book-zoom-in {
-            0% { opacity: 0; transform: scale(0.8); }
+            0% { opacity: 0; transform: scale(0.95); }
             100% { opacity: 1; transform: scale(1); }
           }
         `
