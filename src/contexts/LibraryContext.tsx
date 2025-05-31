@@ -19,6 +19,8 @@ interface LibraryContextProps {
   addNote: (bookId: number, content: string) => void;
   deleteNote: (noteId: string) => void;
   getNotesByBook: (bookId: number) => Note[];
+  isLoading: boolean;
+  isError: boolean;
 }
 
 const LibraryContext = createContext<LibraryContextProps>({} as LibraryContextProps);
@@ -50,26 +52,27 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     getUniqueId();
   }, []);
 
-  // Fetch books from Supabase
-  const { data: books = [] } = useQuery({
+  // Fetch books from Supabase with better error handling
+  const { data: books = [], isLoading, isError } = useQuery({
     queryKey: ['books'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('biblioteca_juridica')
-        .select('*');
+        .select('*')
+        .order('id', { ascending: true });
       
       if (error) {
         console.error('Error fetching books:', error);
-        toast({
-          title: "Erro ao carregar livros",
-          description: "Não foi possível carregar os livros. Tente novamente mais tarde.",
-        });
-        return mockBooks; // Fallback to mock data if there's an error
+        // Don't show toast immediately, let component handle it
+        return mockBooks; // Fallback to mock data
       }
       
       return data as Book[];
     },
-    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    retryDelay: 1000,
   });
   
   // Fetch user favorites
@@ -91,6 +94,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return data.map(fav => Number(fav.book_id));
     },
     enabled: !!userIp,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
   
   // Fetch user notes
@@ -102,7 +106,8 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const { data, error } = await supabase
         .from('book_notes')
         .select('*')
-        .eq('user_ip', userIp);
+        .eq('user_ip', userIp)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching notes:', error);
@@ -117,9 +122,10 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       })) as Note[];
     },
     enabled: !!userIp,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
   
-  // Toggle favorite mutation
+  // Toggle favorite mutation with optimistic updates
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (bookId: number) => {
       const isFavorite = favorites.includes(bookId);
@@ -146,10 +152,28 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       return { bookId, isFavorite: !isFavorite };
     },
+    onMutate: async (bookId) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['favorites', userIp] });
+      const previousFavorites = queryClient.getQueryData<number[]>(['favorites', userIp]);
+      
+      const isFavorite = favorites.includes(bookId);
+      const newFavorites = isFavorite 
+        ? favorites.filter(id => id !== bookId)
+        : [...favorites, bookId];
+      
+      queryClient.setQueryData(['favorites', userIp], newFavorites);
+      
+      return { previousFavorites };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites', userIp] });
     },
-    onError: (error) => {
+    onError: (error, bookId, context) => {
+      // Rollback optimistic update
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(['favorites', userIp], context.previousFavorites);
+      }
       toast({
         title: "Erro ao atualizar favoritos",
         description: error.message,
@@ -273,7 +297,9 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleFavorite,
         addNote,
         deleteNote,
-        getNotesByBook
+        getNotesByBook,
+        isLoading,
+        isError
       }}
     >
       {children}
