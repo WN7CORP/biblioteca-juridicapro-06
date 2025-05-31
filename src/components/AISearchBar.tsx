@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Loader2, Sparkles, X, Filter, TrendingUp } from 'lucide-react';
+import { Search, BookOpen, Loader2, Sparkles, X, Filter, TrendingUp, Heart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLibrary } from '@/contexts/LibraryContext';
@@ -24,7 +24,7 @@ const AISearchBar: React.FC = () => {
   const [searchResult, setSearchResult] = useState<string>('');
   const [quickSearchResults, setQuickSearchResults] = useState<Book[]>([]);
   const [showQuickResults, setShowQuickResults] = useState(false);
-  const { books, setSelectedArea, setSearchTerm, searchTerm } = useLibrary();
+  const { books, setSelectedArea, setSearchTerm, searchTerm, toggleFavorite } = useLibrary();
   const navigate = useNavigate();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -189,6 +189,35 @@ const AISearchBar: React.FC = () => {
     }
   };
 
+  const handleFavoriteClick = async (e: React.MouseEvent, book: Book) => {
+    e.stopPropagation();
+    
+    try {
+      await toggleFavorite(book.id);
+      
+      if (!book.favorito) {
+        toast({
+          title: "❤️ Adicionado aos favoritos",
+          description: book.livro,
+          duration: 2000,
+        });
+      } else {
+        toast({
+          title: "Removido dos favoritos",
+          description: book.livro,
+          duration: 2000,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar favoritos. Tente novamente.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div className="mb-6">
       <div className="bg-gradient-to-r from-netflix-card to-[#1a1a1a] rounded-lg p-4 border border-netflix-cardHover">
@@ -291,57 +320,112 @@ const AISearchBar: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Main result */}
+                        {/* Main result - IMPROVED PRESENTATION */}
                         {matchedBooks.length > 0 && (
-                          <div className="space-y-3 mb-6 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-netflix-accent animate-book-entrance">
-                            <h4 className="font-medium text-white text-base mb-2">📚 Resultado Principal</h4>
+                          <div className="space-y-3 mb-6 bg-gradient-to-r from-[#1a1a1a] to-[#2a1a1a] rounded-xl p-6 border-l-4 border-netflix-accent animate-book-entrance shadow-lg">
+                            <div className="flex items-center mb-4">
+                              <BookOpen className="mr-2 text-netflix-accent" size={20} />
+                              <h4 className="font-bold text-white text-lg">📚 Resultado Principal</h4>
+                            </div>
                             {matchedBooks.map((book, idx) => (
                               <div 
                                 key={book.id}
                                 onClick={() => handleBookClick(book)}
-                                className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-netflix-accent flex"
+                                className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-xl overflow-hidden border border-netflix-cardHover hover:border-netflix-accent hover:shadow-xl flex p-4"
                               >
-                                <div className="w-1/4 overflow-hidden">
+                                <div className="w-24 h-32 overflow-hidden rounded-lg shadow-md flex-shrink-0">
                                   <img 
                                     src={book.imagem} 
                                     alt={book.livro} 
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   />
                                 </div>
-                                <div className="p-3 flex-grow flex flex-col">
-                                  <h5 className="font-medium text-netflix-accent line-clamp-2 text-sm">{book.livro}</h5>
-                                  <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
-                                  <p className="text-xs mt-2 line-clamp-3 text-netflix-text flex-grow">
-                                    {book.sobre || 'Material jurídico especializado para estudo e consulta.'}
-                                  </p>
+                                <div className="flex-grow pl-4 flex flex-col justify-between">
+                                  <div>
+                                    <h5 className="font-bold text-netflix-accent line-clamp-2 text-base mb-2 group-hover:text-white transition-colors">{book.livro}</h5>
+                                    <Badge variant="secondary" className="mb-2 bg-netflix-accent/20 text-netflix-accent border-netflix-accent/30">
+                                      {book.area}
+                                    </Badge>
+                                    <p className="text-sm text-netflix-text line-clamp-3 leading-relaxed">
+                                      {book.sobre || 'Material jurídico especializado para estudo e consulta. Conteúdo atualizado e de qualidade para sua formação jurídica.'}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-4">
+                                    <Button
+                                      onClick={() => handleBookClick(book)}
+                                      className="bg-netflix-accent hover:bg-[#c11119] text-white text-sm px-4 py-2"
+                                      size="sm"
+                                    >
+                                      Ver detalhes
+                                    </Button>
+                                    <button
+                                      onClick={(e) => handleFavoriteClick(e, book)}
+                                      className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+                                        book.favorito 
+                                          ? 'bg-netflix-accent/90 backdrop-blur-sm' 
+                                          : 'bg-black/50 backdrop-blur-sm hover:bg-black/70'
+                                      }`}
+                                    >
+                                      <Heart 
+                                        size={18} 
+                                        className={`transition-all duration-200 ${
+                                          book.favorito 
+                                            ? 'text-white fill-white' 
+                                            : 'text-white hover:text-netflix-accent'
+                                        }`} 
+                                      />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         )}
 
-                        {/* Related books */}
+                        {/* Related books - IMPROVED PRESENTATION */}
                         {relatedBooks.length > 0 && (
-                          <div className="space-y-3 bg-[#1a1a1a] rounded-lg p-4 border-l-2 border-blue-500 animate-book-entrance">
-                            <h4 className="font-medium text-white text-base mb-2">🔗 Livros Relacionados</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-3 bg-gradient-to-r from-[#1a1a1a] to-[#151c2a] rounded-xl p-6 border-l-4 border-blue-500 animate-book-entrance shadow-lg">
+                            <div className="flex items-center mb-4">
+                              <Sparkles className="mr-2 text-blue-400" size={20} />
+                              <h4 className="font-bold text-white text-lg">🔗 Livros Relacionados</h4>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {relatedBooks.map((book, idx) => (
                                 <div 
                                   key={book.id}
                                   onClick={() => handleBookClick(book)}
-                                  className="book-card cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex"
+                                  className="group relative cursor-pointer bg-netflix-card hover:bg-netflix-cardHover transition-all duration-300 rounded-lg overflow-hidden border border-netflix-cardHover hover:border-blue-500 flex p-3"
                                   style={{ animationDelay: `${idx * 100}ms` }}
                                 >
-                                  <div className="w-1/3 overflow-hidden">
+                                  <div className="w-16 h-20 overflow-hidden rounded flex-shrink-0">
                                     <img 
                                       src={book.imagem} 
                                       alt={book.livro} 
-                                      className="w-full h-full object-cover"
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     />
                                   </div>
-                                  <div className="p-2 flex-grow flex flex-col">
-                                    <h5 className="font-medium text-blue-400 line-clamp-2 text-xs">{book.livro}</h5>
-                                    <p className="text-xs text-netflix-secondary mt-1">{book.area}</p>
+                                  <div className="flex-grow pl-3 flex flex-col justify-between">
+                                    <div>
+                                      <h5 className="font-medium text-blue-400 line-clamp-2 text-sm mb-1 group-hover:text-white transition-colors">{book.livro}</h5>
+                                      <p className="text-xs text-netflix-secondary">{book.area}</p>
+                                    </div>
+                                    <button
+                                      onClick={(e) => handleFavoriteClick(e, book)}
+                                      className={`self-end mt-2 p-1 rounded-full transition-all duration-200 hover:scale-110 ${
+                                        book.favorito 
+                                          ? 'bg-netflix-accent/90' 
+                                          : 'bg-black/50 hover:bg-black/70'
+                                      }`}
+                                    >
+                                      <Heart 
+                                        size={14} 
+                                        className={`transition-all duration-200 ${
+                                          book.favorito 
+                                            ? 'text-white fill-white' 
+                                            : 'text-white hover:text-netflix-accent'
+                                        }`} 
+                                      />
+                                    </button>
                                   </div>
                                 </div>
                               ))}

@@ -22,20 +22,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick, index = 0 }) => {
     try {
       await toggleFavorite(book.id);
       
-      if (!book.favorito) {
-        toast({
-          title: "❤️ Adicionado aos favoritos",
-          description: book.livro,
-          duration: 2000,
-        });
-      } else {
-        toast({
-          title: "Removido dos favoritos",
-          description: book.livro,
-          duration: 2000,
-        });
-      }
+      toast({
+        title: book.favorito ? "Removido dos favoritos" : "❤️ Adicionado aos favoritos",
+        description: book.livro,
+        duration: 2000,
+      });
     } catch (error) {
+      console.error('Erro ao favoritar:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar favoritos. Tente novamente.",
