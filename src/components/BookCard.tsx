@@ -23,7 +23,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
     try {
       console.log('Favoriting book:', book.id, 'Current status:', book.favorito);
       
-      // Enhanced animation for mobile
+      // Enhanced animation for mobile - trigger immediately
       setIsAnimating(true);
       
       // Haptic feedback for mobile devices
@@ -31,8 +31,10 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
         navigator.vibrate(50);
       }
       
-      setTimeout(() => setIsAnimating(false), 800);
+      // Reset animation after duration
+      const animationTimeout = setTimeout(() => setIsAnimating(false), 800);
       
+      // Execute the favorite toggle
       await toggleFavorite(book.id);
       
       toast({
@@ -40,8 +42,12 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
         description: book.livro,
         duration: 2000,
       });
+      
+      // Cleanup timeout
+      return () => clearTimeout(animationTimeout);
     } catch (error) {
       console.error('Erro ao favoritar:', error);
+      setIsAnimating(false); // Reset animation on error
       toast({
         title: "Erro",
         description: "Não foi possível atualizar favoritos. Tente novamente.",
@@ -96,7 +102,7 @@ const BookCard: React.FC<BookCardProps> = memo(({ book, onClick, index = 0 }) =>
           
           {/* Enhanced Animation for Mobile */}
           {isAnimating && (
-            <div className="absolute inset-0 rounded-full">
+            <div className="absolute inset-0 rounded-full pointer-events-none">
               <div className="absolute inset-0 rounded-full bg-netflix-accent/40 animate-ping" />
               <div className="absolute inset-0 rounded-full bg-netflix-accent/30 animate-ping" style={{ animationDelay: '0.1s' }} />
               <div className="absolute inset-0 rounded-full bg-netflix-accent/20 animate-ping" style={{ animationDelay: '0.2s' }} />
