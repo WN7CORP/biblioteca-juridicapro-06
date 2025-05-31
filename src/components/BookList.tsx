@@ -9,9 +9,10 @@ import LazyImage from './LazyImage';
 interface BookListProps {
   books: Book[];
   onBookClick: (book: Book) => void;
+  highlightedBookId?: number | null;
 }
 
-const BookList: React.FC<BookListProps> = ({ books, onBookClick }) => {
+const BookList: React.FC<BookListProps> = ({ books, onBookClick, highlightedBookId }) => {
   const { toggleFavorite } = useLibrary();
   const { toast } = useToast();
   const [animatingBookId, setAnimatingBookId] = useState<number | null>(null);
@@ -58,11 +59,17 @@ const BookList: React.FC<BookListProps> = ({ books, onBookClick }) => {
     <div className="space-y-3">
       {books.map((book, index) => {
         const isAnimating = animatingBookId === book.id;
+        const isHighlighted = highlightedBookId === book.id;
         
         return (
           <div
             key={book.id}
-            className="bg-netflix-card hover:bg-netflix-cardHover border border-netflix-cardHover hover:border-netflix-accent rounded-lg p-4 cursor-pointer transition-all duration-300 animate-fade-in group"
+            data-book-id={book.id}
+            className={`bg-netflix-card hover:bg-netflix-cardHover border transition-all duration-300 animate-fade-in group cursor-pointer rounded-lg p-4 ${
+              isHighlighted 
+                ? 'border-netflix-accent ring-2 ring-netflix-accent ring-offset-2 ring-offset-netflix-background animate-pulse' 
+                : 'border-netflix-cardHover hover:border-netflix-accent'
+            }`}
             onClick={() => onBookClick(book)}
             style={{
               animationDelay: `${index * 50}ms`,

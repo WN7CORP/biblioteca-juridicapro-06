@@ -9,9 +9,16 @@ interface BookGridProps {
   onBookClick: (book: Book) => void;
   title?: string;
   isLoading?: boolean;
+  highlightedBookId?: number | null;
 }
 
-const BookGrid: React.FC<BookGridProps> = ({ books, onBookClick, title, isLoading = false }) => {
+const BookGrid: React.FC<BookGridProps> = ({ 
+  books, 
+  onBookClick, 
+  title, 
+  isLoading = false,
+  highlightedBookId 
+}) => {
   if (isLoading) {
     return (
       <div className="mb-10">
@@ -46,12 +53,21 @@ const BookGrid: React.FC<BookGridProps> = ({ books, onBookClick, title, isLoadin
       )}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {books.map((book, index) => (
-          <BookCard 
-            key={book.id} 
-            book={book} 
-            onClick={() => onBookClick(book)}
-            index={index}
-          />
+          <div
+            key={book.id}
+            data-book-id={book.id}
+            className={`${
+              highlightedBookId === book.id 
+                ? 'ring-2 ring-netflix-accent ring-offset-2 ring-offset-netflix-background animate-pulse' 
+                : ''
+            }`}
+          >
+            <BookCard 
+              book={book} 
+              onClick={() => onBookClick(book)}
+              index={index}
+            />
+          </div>
         ))}
       </div>
     </div>

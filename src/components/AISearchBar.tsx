@@ -1,8 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Sparkles, Loader2, X, Send } from 'lucide-react';
+import { Search, Sparkles, Loader2, X, Send, MapPin } from 'lucide-react';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 
 const AISearchBar = () => {
   const [query, setQuery] = useState('');
@@ -10,7 +12,9 @@ const AISearchBar = () => {
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [aiResponse, setAiResponse] = useState('');
+  const [activeTab, setActiveTab] = useState('search');
   const { books } = useLibrary();
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +31,7 @@ const AISearchBar = () => {
     
     setIsLoading(true);
     setShowResults(true);
+    setActiveTab('results');
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -37,7 +42,7 @@ const AISearchBar = () => {
       book.area.toLowerCase().includes(query.toLowerCase())
     );
     
-    setResults(filteredBooks.slice(0, 6)); // Show max 6 results
+    setResults(filteredBooks.slice(0, 8)); // Show max 8 results
     
     // Generate AI response based on query
     const queryLower = query.toLowerCase();
@@ -51,6 +56,17 @@ const AISearchBar = () => {
     setIsLoading(false);
   };
 
+  const handleBookClick = (book: any) => {
+    // Navigate to the book's category and highlight it
+    const categoryUrl = `/categories/${encodeURIComponent(book.area)}`;
+    navigate(categoryUrl, { 
+      state: { 
+        highlightBookId: book.id,
+        searchQuery: query 
+      } 
+    });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -62,6 +78,7 @@ const AISearchBar = () => {
     setShowResults(false);
     setResults([]);
     setAiResponse('');
+    setActiveTab('search');
     inputRef.current?.focus();
   };
 
@@ -78,106 +95,142 @@ const AISearchBar = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto" ref={resultsRef}>
-      <div className="relative">
-        <div className="flex items-center bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden transition-all duration-200 focus-within:border-netflix-accent">
-          <div className="flex items-center px-4 py-3">
-            <Sparkles className="text-netflix-accent mr-2" size={20} />
-            <span className="text-netflix-accent text-sm font-medium whitespace-nowrap">Busca Inteligente</span>
-          </div>
-          
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Digite o que você procura..."
-            className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-4 py-3 focus:outline-none min-w-0"
-          />
-          
-          {query && (
-            <button
-              onClick={clearSearch}
-              className="p-2 text-netflix-secondary hover:text-white transition-colors"
-            >
-              <X size={18} />
-            </button>
-          )}
-          
-          <Button
-            onClick={handleSearch}
-            disabled={!query.trim() || isLoading}
-            className="m-2 bg-netflix-accent hover:bg-netflix-accent/90 text-white rounded-lg px-4 py-2 transition-all duration-200 disabled:opacity-50"
+    <div className="relative w-full max-w-4xl mx-auto" ref={resultsRef}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-netflix-card border border-netflix-cardHover">
+          <TabsTrigger 
+            value="search" 
+            className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white"
           >
-            {isLoading ? (
-              <Loader2 className="animate-spin" size={18} />
-            ) : (
-              <Send size={18} />
-            )}
-          </Button>
-        </div>
-      </div>
+            <Search className="mr-2" size={16} />
+            Busca Inteligente
+          </TabsTrigger>
+          <TabsTrigger 
+            value="results" 
+            disabled={!showResults}
+            className="data-[state=active]:bg-netflix-accent data-[state=active]:text-white disabled:opacity-50"
+          >
+            <Sparkles className="mr-2" size={16} />
+            Resultados IA
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Results Dropdown */}
-      {showResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-netflix-card border border-netflix-cardHover rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto animate-fade-in">
-          {isLoading ? (
-            <div className="p-6 text-center">
-              <div className="flex items-center justify-center mb-3">
-                <Sparkles className="text-netflix-accent animate-pulse mr-2" size={24} />
-                <span className="text-netflix-accent">IA processando...</span>
+        <TabsContent value="search" className="mt-4">
+          <div className="relative">
+            <div className="flex items-center bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden transition-all duration-200 focus-within:border-netflix-accent">
+              <div className="flex items-center px-4 py-4">
+                <Sparkles className="text-netflix-accent mr-3" size={24} />
+                <span className="text-netflix-accent text-base font-medium whitespace-nowrap">Busca Inteligente</span>
               </div>
-              <div className="animate-pulse text-netflix-secondary text-lg">
-                Analisando sua consulta e buscando os melhores resultados...
-              </div>
+              
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Digite o que você procura..."
+                className="flex-1 bg-transparent text-white placeholder-netflix-secondary px-4 py-4 text-base focus:outline-none min-w-0"
+              />
+              
+              {query && (
+                <button
+                  onClick={clearSearch}
+                  className="p-3 text-netflix-secondary hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              )}
+              
+              <Button
+                onClick={handleSearch}
+                disabled={!query.trim() || isLoading}
+                className="m-3 bg-netflix-accent hover:bg-netflix-accent/90 text-white rounded-lg px-6 py-3 transition-all duration-200 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <Send size={20} />
+                )}
+              </Button>
             </div>
-          ) : (
-            <>
-              {/* AI Response */}
-              {aiResponse && (
-                <div className="p-4 border-b border-netflix-cardHover bg-netflix-cardHover/50">
-                  <div className="flex items-start mb-2">
-                    <Sparkles className="text-netflix-accent mt-1 mr-2 flex-shrink-0" size={16} />
-                    <span className="text-netflix-accent font-medium text-sm">Resposta da IA</span>
-                  </div>
-                  <p className="text-white text-base leading-relaxed ml-6">{aiResponse}</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="results" className="mt-4">
+          <div className="bg-netflix-card border border-netflix-cardHover rounded-xl overflow-hidden animate-fade-in">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="flex items-center justify-center mb-4">
+                  <Sparkles className="text-netflix-accent animate-pulse mr-3" size={32} />
+                  <span className="text-netflix-accent text-xl font-medium">IA processando...</span>
                 </div>
-              )}
-              
-              {/* Search Results */}
-              {results.length > 0 && (
-                <div className="p-4">
-                  <h3 className="text-netflix-secondary text-sm font-medium mb-3">
-                    Livros encontrados ({results.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {results.map((book) => (
-                      <div key={book.id} className="flex items-center p-3 rounded-lg hover:bg-netflix-cardHover transition-colors cursor-pointer">
-                        <img 
-                          src={book.imagem} 
-                          alt={book.livro}
-                          className="w-10 h-12 object-cover rounded mr-3 flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-medium text-sm line-clamp-1">{book.livro}</h4>
-                          <p className="text-netflix-secondary text-xs">{book.area}</p>
+                <div className="animate-pulse text-netflix-secondary text-lg">
+                  Analisando sua consulta e buscando os melhores resultados...
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* AI Response */}
+                {aiResponse && (
+                  <div className="p-6 border-b border-netflix-cardHover bg-netflix-cardHover/30">
+                    <div className="flex items-start mb-3">
+                      <Sparkles className="text-netflix-accent mt-1 mr-3 flex-shrink-0" size={20} />
+                      <span className="text-netflix-accent font-semibold text-lg">Análise da IA</span>
+                    </div>
+                    <p className="text-white text-lg leading-relaxed ml-8">{aiResponse}</p>
+                  </div>
+                )}
+                
+                {/* Search Results */}
+                {results.length > 0 && (
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-white text-lg font-semibold">
+                        Livros encontrados ({results.length})
+                      </h3>
+                      <span className="text-netflix-secondary text-sm">
+                        Clique para ir até o livro
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {results.map((book) => (
+                        <div 
+                          key={book.id} 
+                          onClick={() => handleBookClick(book)}
+                          className="flex items-center p-4 rounded-lg hover:bg-netflix-cardHover transition-all duration-200 cursor-pointer group border border-transparent hover:border-netflix-accent"
+                        >
+                          <img 
+                            src={book.imagem} 
+                            alt={book.livro}
+                            className="w-12 h-16 object-cover rounded mr-4 flex-shrink-0 group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-white font-medium text-base line-clamp-2 group-hover:text-netflix-accent transition-colors">
+                              {book.livro}
+                            </h4>
+                            <p className="text-netflix-secondary text-sm mt-1">{book.area}</p>
+                            <div className="flex items-center mt-2 text-xs text-netflix-accent">
+                              <MapPin size={12} className="mr-1" />
+                              <span>Ir para livro</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {results.length === 0 && !isLoading && aiResponse && (
-                <div className="p-4 text-center">
-                  <p className="text-netflix-secondary">Nenhum livro específico encontrado, mas a IA pode te ajudar!</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                )}
+                
+                {results.length === 0 && !isLoading && aiResponse && (
+                  <div className="p-6 text-center">
+                    <p className="text-netflix-secondary text-lg">Nenhum livro específico encontrado, mas a IA pode te ajudar!</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
