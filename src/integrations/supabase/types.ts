@@ -3466,6 +3466,36 @@ export type Database = {
         }
         Relationships: []
       }
+      livros_de_sucesso: {
+        Row: {
+          capa_area: string | null
+          capa_livros: string | null
+          categoria: string | null
+          id: number
+          link: string | null
+          livro: string | null
+          sinopse: string | null
+        }
+        Insert: {
+          capa_area?: string | null
+          capa_livros?: string | null
+          categoria?: string | null
+          id?: number
+          link?: string | null
+          livro?: string | null
+          sinopse?: string | null
+        }
+        Update: {
+          capa_area?: string | null
+          capa_livros?: string | null
+          categoria?: string | null
+          id?: number
+          link?: string | null
+          livro?: string | null
+          sinopse?: string | null
+        }
+        Relationships: []
+      }
       livros_historico_visualizacao: {
         Row: {
           id: string
@@ -4169,6 +4199,54 @@ export type Database = {
           id?: string
           onboarding_completed?: boolean | null
           premium_until?: string | null
+        }
+        Relationships: []
+      }
+      progresso_questos1: {
+        Row: {
+          answered_at: string
+          area: string | null
+          assunto: string | null
+          created_at: string
+          id: string
+          is_correct: boolean
+          question_id: number
+          selected_answer: string | null
+          session_id: string | null
+          tema: string | null
+          time_spent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          area?: string | null
+          assunto?: string | null
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: number
+          selected_answer?: string | null
+          session_id?: string | null
+          tema?: string | null
+          time_spent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          area?: string | null
+          assunto?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: number
+          selected_answer?: string | null
+          session_id?: string | null
+          tema?: string | null
+          time_spent?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
