@@ -19,7 +19,7 @@ const PopularBooksPreview: React.FC<PopularBooksPreviewProps> = ({ books }) => {
         {books.map((book, index) => (
           <div key={book.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-netflix-background/50 transition-colors">
             <div className="w-8 h-10 bg-gradient-to-br from-netflix-accent/20 to-netflix-accent/40 rounded flex items-center justify-center">
-              <Book size={14} className="text-netflix-accent" />
+              <BookOpen size={14} className="text-netflix-accent" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-netflix-text truncate">
