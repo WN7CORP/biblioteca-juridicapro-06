@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       annotations: {
@@ -42,6 +47,54 @@ export type Database = {
           law_id?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      APP: {
+        Row: {
+          descricao: string | null
+          funcao: string | null
+          id: number
+          link: string | null
+        }
+        Insert: {
+          descricao?: string | null
+          funcao?: string | null
+          id?: number
+          link?: string | null
+        }
+        Update: {
+          descricao?: string | null
+          funcao?: string | null
+          id?: number
+          link?: string | null
+        }
+        Relationships: []
+      }
+      app_users: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          last_seen: string | null
+          preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          last_seen?: string | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          last_seen?: string | null
+          preferences?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -796,8 +849,11 @@ export type Database = {
           excerpt: string | null
           id: string
           image_url: string | null
+          meta_description: string | null
           published_date: string | null
           read_time: string | null
+          slug: string | null
+          status: string | null
           title: string
           updated_at: string
           views: number | null
@@ -810,8 +866,11 @@ export type Database = {
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          meta_description?: string | null
           published_date?: string | null
           read_time?: string | null
+          slug?: string | null
+          status?: string | null
           title: string
           updated_at?: string
           views?: number | null
@@ -824,8 +883,11 @@ export type Database = {
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          meta_description?: string | null
           published_date?: string | null
           read_time?: string | null
+          slug?: string | null
+          status?: string | null
           title?: string
           updated_at?: string
           views?: number | null
@@ -940,6 +1002,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      BLOGER: {
+        Row: {
+          Area: string | null
+          Artigo: string | null
+          Assunto: string | null
+          Capa: string | null
+          Categoria: string | null
+          id: number
+          Sequencia: string | null
+          Tema: string | null
+        }
+        Insert: {
+          Area?: string | null
+          Artigo?: string | null
+          Assunto?: string | null
+          Capa?: string | null
+          Categoria?: string | null
+          id?: number
+          Sequencia?: string | null
+          Tema?: string | null
+        }
+        Update: {
+          Area?: string | null
+          Artigo?: string | null
+          Assunto?: string | null
+          Capa?: string | null
+          Categoria?: string | null
+          id?: number
+          Sequencia?: string | null
+          Tema?: string | null
+        }
+        Relationships: []
       }
       book_assistant_history: {
         Row: {
@@ -1061,6 +1156,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      caca_palavras: {
+        Row: {
+          Area: string | null
+          id: number
+          "Nivel 1": string | null
+          "Nivel 2": string | null
+          "Nivel 3": string | null
+          "Nivel 4": string | null
+          "Nivel 5": string | null
+          Tema: string | null
+        }
+        Insert: {
+          Area?: string | null
+          id?: number
+          "Nivel 1"?: string | null
+          "Nivel 2"?: string | null
+          "Nivel 3"?: string | null
+          "Nivel 4"?: string | null
+          "Nivel 5"?: string | null
+          Tema?: string | null
+        }
+        Update: {
+          Area?: string | null
+          id?: number
+          "Nivel 1"?: string | null
+          "Nivel 2"?: string | null
+          "Nivel 3"?: string | null
+          "Nivel 4"?: string | null
+          "Nivel 5"?: string | null
+          Tema?: string | null
+        }
+        Relationships: []
       }
       categorias: {
         Row: {
@@ -1543,6 +1671,136 @@ export type Database = {
           sobre?: string | null
         }
         Relationships: []
+      }
+      daily_comment_usage: {
+        Row: {
+          comment_count: number
+          created_at: string
+          date: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_count?: number
+          created_at?: string
+          date?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_count?: number
+          created_at?: string
+          date?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      desafio_90_dias: {
+        Row: {
+          concluido: boolean | null
+          created_at: string | null
+          data_inicio: string
+          dia_atual: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          concluido?: boolean | null
+          created_at?: string | null
+          data_inicio?: string
+          dia_atual?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          concluido?: boolean | null
+          created_at?: string | null
+          data_inicio?: string
+          dia_atual?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      desafio_aplicacoes: {
+        Row: {
+          aplicado_manha: boolean | null
+          aplicado_noite: boolean | null
+          created_at: string | null
+          data_aplicacao: string
+          desafio_id: string
+          dia: number
+          id: string
+        }
+        Insert: {
+          aplicado_manha?: boolean | null
+          aplicado_noite?: boolean | null
+          created_at?: string | null
+          data_aplicacao?: string
+          desafio_id: string
+          dia: number
+          id?: string
+        }
+        Update: {
+          aplicado_manha?: boolean | null
+          aplicado_noite?: boolean | null
+          created_at?: string | null
+          data_aplicacao?: string
+          desafio_id?: string
+          dia?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafio_aplicacoes_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafio_90_dias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      desafio_fotos: {
+        Row: {
+          created_at: string | null
+          desafio_id: string
+          dia: number
+          foto_url: string
+          id: string
+          observacoes: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          desafio_id: string
+          dia: number
+          foto_url: string
+          id?: string
+          observacoes?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          desafio_id?: string
+          dia?: number
+          foto_url?: string
+          id?: string
+          observacoes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafio_fotos_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafio_90_dias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dicionario_juridico: {
         Row: {
@@ -2084,6 +2342,36 @@ export type Database = {
         Row: {
           area: string | null
           created_at: string
+          exemplo: string | null
+          id: number
+          pergunta: string | null
+          resposta: string | null
+          tema: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Relationships: []
+      }
+      flash_cards_enigma: {
+        Row: {
+          area: string | null
+          created_at: string
           id: number
           pergunta: string | null
           resposta: string | null
@@ -2249,6 +2537,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "HARRY POTTER": {
+        Row: {
+          categoria: string | null
+          descricao: string | null
+          id: number
+          imagem1: string | null
+          imagem2: string | null
+          imagem3: string | null
+          imagem4: string | null
+          imagem5: string | null
+          imagem6: string | null
+          imagem7: string | null
+          link: string | null
+          produto: string | null
+          subcategoria: string | null
+          uso: string | null
+          valor: string | null
+          video: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          imagem1?: string | null
+          imagem2?: string | null
+          imagem3?: string | null
+          imagem4?: string | null
+          imagem5?: string | null
+          imagem6?: string | null
+          imagem7?: string | null
+          link?: string | null
+          produto?: string | null
+          subcategoria?: string | null
+          uso?: string | null
+          valor?: string | null
+          video?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          imagem1?: string | null
+          imagem2?: string | null
+          imagem3?: string | null
+          imagem4?: string | null
+          imagem5?: string | null
+          imagem6?: string | null
+          imagem7?: string | null
+          link?: string | null
+          produto?: string | null
+          subcategoria?: string | null
+          uso?: string | null
+          valor?: string | null
+          video?: string | null
+        }
+        Relationships: []
       }
       jogos_alfabeto: {
         Row: {
@@ -3771,6 +4116,33 @@ export type Database = {
           },
         ]
       }
+      "MINOXIDIL VIDEOS": {
+        Row: {
+          data: string | null
+          duracao: string | null
+          id: number
+          thumbnail: string | null
+          titulo: string | null
+          video: string | null
+        }
+        Insert: {
+          data?: string | null
+          duracao?: string | null
+          id?: number
+          thumbnail?: string | null
+          titulo?: string | null
+          video?: string | null
+        }
+        Update: {
+          data?: string | null
+          duracao?: string | null
+          id?: number
+          thumbnail?: string | null
+          titulo?: string | null
+          video?: string | null
+        }
+        Relationships: []
+      }
       modelos_peticoes: {
         Row: {
           area: string | null
@@ -3792,6 +4164,57 @@ export type Database = {
           id?: number
           link?: string | null
           total?: string | null
+        }
+        Relationships: []
+      }
+      MUNDODODIREITO: {
+        Row: {
+          categoria: string | null
+          descricao: string | null
+          id: number
+          imagem1: string | null
+          link: string | null
+          produto: string | null
+          valor: string | null
+          video: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          imagem1?: string | null
+          link?: string | null
+          produto?: string | null
+          valor?: string | null
+          video?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          imagem1?: string | null
+          link?: string | null
+          produto?: string | null
+          valor?: string | null
+          video?: string | null
+        }
+        Relationships: []
+      }
+      musicasharrypotter: {
+        Row: {
+          "explorar-categoria": string | null
+          id: number
+          intro: string | null
+        }
+        Insert: {
+          "explorar-categoria"?: string | null
+          id?: number
+          intro?: string | null
+        }
+        Update: {
+          "explorar-categoria"?: string | null
+          id?: number
+          intro?: string | null
         }
         Relationships: []
       }
@@ -4172,33 +4595,181 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_orders: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          status: string | null
+          stripe_session_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      product_clicks: {
+        Row: {
+          click_type: string
+          clicked_at: string | null
+          created_at: string | null
+          device_id: string
+          id: string
+          product_id: number
+          user_id: string | null
+        }
+        Insert: {
+          click_type?: string
+          clicked_at?: string | null
+          created_at?: string | null
+          device_id: string
+          id?: string
+          product_id: number
+          user_id?: string | null
+        }
+        Update: {
+          click_type?: string
+          clicked_at?: string | null
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          product_id?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_category: string | null
+          product_id: number
+          product_name: string | null
+          product_value: string | null
+          purchased_at: string | null
+          user_device_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_category?: string | null
+          product_id: number
+          product_name?: string | null
+          product_value?: string | null
+          purchased_at?: string | null
+          user_device_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_category?: string | null
+          product_id?: number
+          product_name?: string | null
+          product_value?: string | null
+          purchased_at?: string | null
+          user_device_id?: string | null
+        }
+        Relationships: []
+      }
+      product_views: {
+        Row: {
+          id: string
+          product_id: number
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: number
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: number
+          user_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           display_name: string | null
           email: string
+          full_name: string | null
           id: string
+          is_admin: boolean | null
+          is_premium: boolean | null
           onboarding_completed: boolean | null
+          premium_expires_at: string | null
           premium_until: string | null
+          updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           email: string
+          full_name?: string | null
           id: string
+          is_admin?: boolean | null
+          is_premium?: boolean | null
           onboarding_completed?: boolean | null
+          premium_expires_at?: string | null
           premium_until?: string | null
+          updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string
+          full_name?: string | null
           id?: string
+          is_admin?: boolean | null
+          is_premium?: boolean | null
           onboarding_completed?: boolean | null
+          premium_expires_at?: string | null
           premium_until?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -4423,6 +4994,33 @@ export type Database = {
           numero_questao?: number | null
           resposta_correta?: string | null
           tema?: string | null
+        }
+        Relationships: []
+      }
+      Questoes_Preencher: {
+        Row: {
+          Area: string | null
+          Assunto: string | null
+          Definicao: string | null
+          id: number
+          Tema: string | null
+          Termo: string | null
+        }
+        Insert: {
+          Area?: string | null
+          Assunto?: string | null
+          Definicao?: string | null
+          id?: number
+          Tema?: string | null
+          Termo?: string | null
+        }
+        Update: {
+          Area?: string | null
+          Assunto?: string | null
+          Definicao?: string | null
+          id?: number
+          Tema?: string | null
+          Termo?: string | null
         }
         Relationships: []
       }
@@ -4664,6 +5262,231 @@ export type Database = {
           resumo?: string | null
           tema?: string
           topico?: string
+        }
+        Relationships: []
+      }
+      resumos_favoritos: {
+        Row: {
+          area: string
+          assunto: string
+          assunto_id: number
+          created_at: string
+          id: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          assunto: string
+          assunto_id: number
+          created_at?: string
+          id?: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          assunto?: string
+          assunto_id?: number
+          created_at?: string
+          id?: string
+          modulo?: string
+          tema?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      RESUMOS_pro: {
+        Row: {
+          area: string | null
+          exemplo: string | null
+          glossario: string | null
+          id: number
+          mapa_mental: string | null
+          nome_do_modulo: string | null
+          nome_do_tema: string | null
+          numero_do_assunto: string | null
+          numero_do_modulo: string | null
+          numero_do_tema: string | null
+          texto: string | null
+          titulo_do_assunto: string | null
+        }
+        Insert: {
+          area?: string | null
+          exemplo?: string | null
+          glossario?: string | null
+          id?: number
+          mapa_mental?: string | null
+          nome_do_modulo?: string | null
+          nome_do_tema?: string | null
+          numero_do_assunto?: string | null
+          numero_do_modulo?: string | null
+          numero_do_tema?: string | null
+          texto?: string | null
+          titulo_do_assunto?: string | null
+        }
+        Update: {
+          area?: string | null
+          exemplo?: string | null
+          glossario?: string | null
+          id?: number
+          mapa_mental?: string | null
+          nome_do_modulo?: string | null
+          nome_do_tema?: string | null
+          numero_do_assunto?: string | null
+          numero_do_modulo?: string | null
+          numero_do_tema?: string | null
+          texto?: string | null
+          titulo_do_assunto?: string | null
+        }
+        Relationships: []
+      }
+      resumos_recentes: {
+        Row: {
+          accessed_at: string
+          area: string
+          assunto: string
+          assunto_id: number
+          id: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          area: string
+          assunto: string
+          assunto_id: number
+          id?: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          area?: string
+          assunto?: string
+          assunto_id?: number
+          id?: string
+          modulo?: string
+          tema?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roleta_juridica: {
+        Row: {
+          Area: string | null
+          created_at: string | null
+          Dica: string | null
+          id: number
+          Tema: string | null
+          Termo: string | null
+        }
+        Insert: {
+          Area?: string | null
+          created_at?: string | null
+          Dica?: string | null
+          id?: number
+          Tema?: string | null
+          Termo?: string | null
+        }
+        Update: {
+          Area?: string | null
+          created_at?: string | null
+          Dica?: string | null
+          id?: number
+          Tema?: string | null
+          Termo?: string | null
+        }
+        Relationships: []
+      }
+      search_analytics: {
+        Row: {
+          article_number: string | null
+          code_id: string | null
+          created_at: string
+          id: string
+          result_count: number | null
+          search_term: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          article_number?: string | null
+          code_id?: string | null
+          created_at?: string
+          id?: string
+          result_count?: number | null
+          search_term: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          article_number?: string | null
+          code_id?: string | null
+          created_at?: string
+          id?: string
+          result_count?: number | null
+          search_term?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      SHOPEE: {
+        Row: {
+          categoria: string | null
+          id: number
+          imagem1: string | null
+          imagem2: string | null
+          imagem3: string | null
+          imagem4: string | null
+          imagem5: string | null
+          imagem6: string | null
+          imagem7: string | null
+          link: string | null
+          produto: string | null
+          subcategoria: string | null
+          uso: string | null
+          valor: string | null
+          video: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          id?: number
+          imagem1?: string | null
+          imagem2?: string | null
+          imagem3?: string | null
+          imagem4?: string | null
+          imagem5?: string | null
+          imagem6?: string | null
+          imagem7?: string | null
+          link?: string | null
+          produto?: string | null
+          subcategoria?: string | null
+          uso?: string | null
+          valor?: string | null
+          video?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          id?: number
+          imagem1?: string | null
+          imagem2?: string | null
+          imagem3?: string | null
+          imagem4?: string | null
+          imagem5?: string | null
+          imagem6?: string | null
+          imagem7?: string | null
+          link?: string | null
+          produto?: string | null
+          subcategoria?: string | null
+          uso?: string | null
+          valor?: string | null
+          video?: string | null
         }
         Relationships: []
       }
@@ -5357,6 +6180,54 @@ export type Database = {
         }
         Relationships: []
       }
+      success_book_favorites: {
+        Row: {
+          book_id: number
+          created_at: string | null
+          id: string
+          user_ip: string
+        }
+        Insert: {
+          book_id: number
+          created_at?: string | null
+          id?: string
+          user_ip: string
+        }
+        Update: {
+          book_id?: number
+          created_at?: string | null
+          id?: string
+          user_ip?: string
+        }
+        Relationships: []
+      }
+      success_book_notes: {
+        Row: {
+          book_id: number
+          created_at: string | null
+          id: string
+          note_text: string
+          updated_at: string | null
+          user_ip: string
+        }
+        Insert: {
+          book_id: number
+          created_at?: string | null
+          id?: string
+          note_text: string
+          updated_at?: string | null
+          user_ip: string
+        }
+        Update: {
+          book_id?: number
+          created_at?: string | null
+          id?: string
+          note_text?: string
+          updated_at?: string | null
+          user_ip?: string
+        }
+        Relationships: []
+      }
       table_name: {
         Row: {
           data: Json | null
@@ -5673,6 +6544,54 @@ export type Database = {
           article_id?: string
           created_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_flashcard_progress: {
+        Row: {
+          area: string
+          correct_answers: number | null
+          created_at: string | null
+          flashcard_id: number
+          id: string
+          last_studied: string | null
+          mastery_level: string | null
+          needs_review: boolean | null
+          streak_count: number | null
+          tema: string | null
+          total_attempts: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          area: string
+          correct_answers?: number | null
+          created_at?: string | null
+          flashcard_id: number
+          id?: string
+          last_studied?: string | null
+          mastery_level?: string | null
+          needs_review?: boolean | null
+          streak_count?: number | null
+          tema?: string | null
+          total_attempts?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          area?: string
+          correct_answers?: number | null
+          created_at?: string | null
+          flashcard_id?: number
+          id?: string
+          last_studied?: string | null
+          mastery_level?: string | null
+          needs_review?: boolean | null
+          streak_count?: number | null
+          tema?: string | null
+          total_attempts?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -6135,6 +7054,84 @@ export type Database = {
         }
         Relationships: []
       }
+      user_recents: {
+        Row: {
+          accessed_at: string
+          area: string
+          assunto: string
+          assunto_id: number
+          id: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          area: string
+          assunto: string
+          assunto_id: number
+          id?: string
+          modulo: string
+          tema: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          area?: string
+          assunto?: string
+          assunto_id?: number
+          id?: string
+          modulo?: string
+          tema?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_scores: {
+        Row: {
+          area: string | null
+          correct_answers: number
+          created_at: string
+          game_mode: string
+          id: string
+          score: number
+          session_date: string
+          study_mode: string | null
+          tema: string | null
+          time_spent: number | null
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          area?: string | null
+          correct_answers?: number
+          created_at?: string
+          game_mode: string
+          id?: string
+          score?: number
+          session_date?: string
+          study_mode?: string | null
+          tema?: string | null
+          time_spent?: number | null
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          area?: string | null
+          correct_answers?: number
+          created_at?: string
+          game_mode?: string
+          id?: string
+          score?: number
+          session_date?: string
+          study_mode?: string | null
+          tema?: string | null
+          time_spent?: number | null
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -6556,6 +7553,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_premium: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       calculate_user_progress: {
         Args: { user_uuid: string }
         Returns: number
@@ -6571,6 +7572,34 @@ export type Database = {
       get_content_details: {
         Args: { p_content_type: string; p_content_ids: string[] }
         Returns: Json
+      }
+      get_most_clicked_products_with_videos: {
+        Args: { limit_count?: number }
+        Returns: {
+          id: number
+          produto: string
+          valor: string
+          video: string
+          imagem1: string
+          imagem2: string
+          imagem3: string
+          imagem4: string
+          imagem5: string
+          link: string
+          categoria: string
+          click_count: number
+        }[]
+      }
+      get_most_purchased_products: {
+        Args: { limit_count?: number }
+        Returns: {
+          product_id: number
+          product_name: string
+          product_category: string
+          product_value: string
+          purchase_count: number
+          last_purchase: string
+        }[]
       }
       get_simulado_leaderboard: {
         Args: { _categoria: string; _limit?: number }
@@ -6632,6 +7661,16 @@ export type Database = {
         Args: { p_book_id: number } | { p_livro_id: string }
         Returns: undefined
       }
+      update_user_recent: {
+        Args: {
+          p_area: string
+          p_modulo: string
+          p_tema: string
+          p_assunto: string
+          p_assunto_id: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -6642,21 +7681,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -6674,14 +7717,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -6697,14 +7742,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -6720,14 +7767,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -6735,14 +7784,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
