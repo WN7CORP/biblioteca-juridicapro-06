@@ -5,13 +5,17 @@ import { useLibrary } from '@/contexts/LibraryContext';
 import MobileNav from '@/components/MobileNav';
 import Header from '@/components/Header';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Layers, Book, ArrowLeft, Search, Grid, List, Sparkles } from 'lucide-react';
+import { ArrowLeft, Search, Grid, List, Sparkles } from 'lucide-react';
 import BookGrid from '@/components/BookGrid';
 import BookList from '@/components/BookList';
 import BookDetailsModal from '@/components/BookDetailsModal';
+import CategoryHeroSection from '@/components/CategoryHeroSection';
+import CategoryCard from '@/components/CategoryCard';
+import CategoryStats from '@/components/CategoryStats';
+import CategoryFilters from '@/components/CategoryFilters';
 
 const Categories: React.FC = () => {
-  const { books, setSelectedArea } = useLibrary();
+  const { books } = useLibrary();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -20,13 +24,17 @@ const Categories: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [highlightedBookId, setHighlightedBookId] = useState<number | null>(null);
+  
+  // New filter states
+  const [sortBy, setSortBy] = useState<'alphabetic' | 'count' | 'recent'>('count');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Check if we came from AI search with a book to highlight
   useEffect(() => {
     if (location.state?.highlightBookId) {
       setHighlightedBookId(location.state.highlightBookId);
       
-      // Auto-scroll to highlighted book after a delay
       setTimeout(() => {
         const bookElement = document.querySelector(`[data-book-id="${location.state.highlightBookId}"]`);
         if (bookElement) {
@@ -34,7 +42,6 @@ const Categories: React.FC = () => {
         }
       }, 500);
 
-      // Remove highlight after 3 seconds
       setTimeout(() => {
         setHighlightedBookId(null);
       }, 3000);
@@ -50,8 +57,48 @@ const Categories: React.FC = () => {
     return acc;
   }, {});
 
-  // Sort areas alphabetically
-  const sortedAreas = Object.entries(areaStats).sort(([areaA], [areaB]) => areaA.localeCompare(areaB));
+  // Sort areas based on filters
+  const getSortedAreas = () => {
+    let sortedEntries = Object.entries(areaStats);
+    
+    // Filter favorites if needed
+    if (showFavoritesOnly) {
+      sortedEntries = sortedEntries.filter(([area]) => 
+        books.some(book => book.area === area && book.favorito)
+      );
+    }
+
+    // Sort based on criteria
+    switch (sortBy) {
+      case 'alphabetic':
+        sortedEntries.sort(([areaA], [areaB]) => 
+          sortOrder === 'asc' ? areaA.localeCompare(areaB) : areaB.localeCompare(areaA)
+        );
+        break;
+      case 'count':
+        sortedEntries.sort(([, countA], [, countB]) => 
+          sortOrder === 'asc' ? countA - countB : countB - countA
+        );
+        break;
+      case 'recent':
+        sortedEntries.sort(([areaA], [areaB]) => {
+          const recentA = books.filter(book => 
+            book.area === areaA && 
+            new Date(book.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          ).length;
+          const recentB = books.filter(book => 
+            book.area === areaB && 
+            new Date(book.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          ).length;
+          return sortOrder === 'asc' ? recentA - recentB : recentB - recentA;
+        });
+        break;
+    }
+
+    return sortedEntries;
+  };
+
+  const sortedAreas = getSortedAreas();
 
   // Filter books by selected area if any
   const filteredBooks = areaName ? books.filter(book => book.area === areaName) : [];
@@ -76,6 +123,7 @@ const Categories: React.FC = () => {
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
         {areaName ? (
           <>
+            {/* Area specific view */}
             <div className="flex items-center justify-between mb-6 animate-fade-in">
               <div className="flex items-center">
                 <button 
@@ -86,7 +134,9 @@ const Categories: React.FC = () => {
                   <span>Voltar</span>
                 </button>
                 <h1 className="text-xl font-bold flex items-center">
-                  <Book className="mr-2" size={24} />
+                  <div className="w-8 h-8 bg-netflix-accent rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-sm font-bold">{areaName.charAt(0)}</span>
+                  </div>
                   {areaName}
                 </h1>
                 <div className="ml-4 text-sm text-netflix-secondary">
@@ -94,7 +144,6 @@ const Categories: React.FC = () => {
                 </div>
               </div>
               
-              {/* Show search info if came from AI search */}
               {location.state?.searchQuery && (
                 <div className="flex items-center text-sm text-netflix-accent bg-netflix-card px-3 py-2 rounded-lg border border-netflix-accent/30">
                   <Sparkles size={14} className="mr-2" />
@@ -102,7 +151,6 @@ const Categories: React.FC = () => {
                 </div>
               )}
               
-              {/* View mode toggle */}
               {filteredBooks.length > 0 && (
                 <div className="flex items-center space-x-2 bg-netflix-card rounded-lg p-1">
                   <button
@@ -145,66 +193,53 @@ const Categories: React.FC = () => {
           </>
         ) : (
           <>
-            <div className="mb-8 animate-fade-in">
-              <h1 className="text-2xl font-bold mb-2 flex items-center">
-                <Layers className="mr-3" size={28} />
-                Categorias
-              </h1>
-              <p className="text-netflix-secondary">
-                Explore nossa biblioteca organizada por áreas do direito
-              </p>
-            </div>
+            {/* Categories overview */}
+            <CategoryHeroSection />
+            
+            <CategoryStats />
+            
+            <CategoryFilters
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              viewMode={viewMode}
+              showFavoritesOnly={showFavoritesOnly}
+              onSortByChange={setSortBy}
+              onSortOrderChange={setSortOrder}
+              onViewModeChange={setViewMode}
+              onFavoritesToggle={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {sortedAreas.map(([area, count], index) => {
-                // Generate a colorful background for each area card
-                const colors = [
-                  "bg-gradient-to-br from-pink-500 to-purple-600",
-                  "bg-gradient-to-br from-blue-500 to-teal-400",
-                  "bg-gradient-to-br from-yellow-400 to-orange-500",
-                  "bg-gradient-to-br from-green-400 to-emerald-600",
-                  "bg-gradient-to-br from-red-500 to-pink-600",
-                  "bg-gradient-to-br from-indigo-500 to-purple-500",
-                  "bg-gradient-to-br from-cyan-400 to-blue-500",
-                  "bg-gradient-to-br from-amber-400 to-yellow-500"
-                ];
-                const colorClass = colors[index % colors.length];
-
+                const areaBooks = books.filter(book => book.area === area);
                 return (
-                  <div
+                  <CategoryCard
                     key={area}
-                    onClick={() => handleAreaClick(area)}
-                    className={`${colorClass} rounded-xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group animate-fade-in relative`}
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animationFillMode: 'both'
-                    }}
-                  >
-                    <div className="flex flex-col items-center text-white text-center h-full">
-                      <div className="mb-4 transform group-hover:scale-110 transition-transform duration-300">
-                        <Book size={48} className="drop-shadow-lg" />
-                      </div>
-                      <h2 className="font-bold text-lg mb-3 leading-tight group-hover:scale-105 transition-transform duration-300">
-                        {area}
-                      </h2>
-                      <div className="mt-auto">
-                        <div className="bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium transform group-hover:scale-105 transition-all duration-300">
-                          {count} {count === 1 ? 'livro' : 'livros'}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="text-white text-sm font-medium flex items-center">
-                        <Search size={16} className="mr-2" />
-                        Explorar área
-                      </div>
-                    </div>
-                  </div>
+                    area={area}
+                    count={count}
+                    books={areaBooks}
+                    index={index}
+                    onClick={handleAreaClick}
+                  />
                 );
               })}
             </div>
+
+            {sortedAreas.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-netflix-secondary text-lg mb-2">
+                  {showFavoritesOnly ? 'Nenhuma área favorita encontrada' : 'Nenhuma categoria disponível'}
+                </div>
+                {showFavoritesOnly && (
+                  <button
+                    onClick={() => setShowFavoritesOnly(false)}
+                    className="text-netflix-accent hover:underline"
+                  >
+                    Ver todas as categorias
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
