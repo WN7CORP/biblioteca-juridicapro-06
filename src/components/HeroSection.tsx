@@ -1,106 +1,104 @@
+
 import React from 'react';
-import { Book, BookOpen, Users, Star, Sparkles } from 'lucide-react';
+import { Book, BookOpen, Sparkles, ArrowRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLibrary } from '@/contexts/LibraryContext';
+
 const HeroSection: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    books
-  } = useLibrary();
+  const { books } = useLibrary();
+  
   const totalBooks = books.length;
   const totalAreas = [...new Set(books.map(book => book.area))].length;
+
   const handleExploreClick = () => {
     const element = document.getElementById('featured-books');
     if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
-  return <div className="relative overflow-hidden bg-gradient-to-br from-netflix-background via-[#1a1a1a] to-[#2a1810] py-16 mb-12">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-20 h-20 border border-netflix-accent rounded-full"></div>
-        <div className="absolute top-32 right-20 w-16 h-16 border border-netflix-accent rounded-lg rotate-45"></div>
-        <div className="absolute bottom-20 left-1/4 w-12 h-12 border border-netflix-accent rounded-full"></div>
-        <div className="absolute bottom-10 right-10 w-24 h-24 border border-netflix-accent rounded-lg rotate-12"></div>
+
+  return (
+    <div className="relative overflow-hidden bg-gradient-to-br from-netflix-background via-[#1a1a1a] to-[#2a1810] py-20">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-netflix-accent/5 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-netflix-accent/5 rounded-full blur-xl animate-pulse delay-1000"></div>
       </div>
       
       <div className="container mx-auto px-4 text-center relative z-10">
-        {/* Main Heading */}
-        <div className="mb-8 animate-fade-in">
-          <div className="flex justify-center items-center mb-4 px-0 py-0 my-0">
-            <Book className="text-netflix-accent mr-3" size={48} />
-            <h1 className="text-4xl md:text-6xl font-bold text-white text-left">
-              Biblioteca <span className="text-netflix-accent">Jurídica</span>
-            </h1>
+        {/* Impactful Welcome */}
+        <div className="mb-12 animate-fade-in">
+          <div className="inline-flex items-center bg-netflix-accent/10 border border-netflix-accent/20 rounded-full px-6 py-3 mb-6">
+            <Sparkles className="text-netflix-accent mr-2" size={20} />
+            <span className="text-netflix-accent font-medium">Sua jornada jurídica começa aqui</span>
           </div>
-          <p className="text-xl md:text-2xl text-netflix-secondary max-w-3xl mx-auto leading-relaxed px-0 py-[7px] text-left">
-            Sua jornada jurídica começa aqui. Acesse milhares de livros, use IA para estudar melhor e domine o Direito.
+          
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Domine o <span className="text-netflix-accent">Direito</span>
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-netflix-secondary max-w-3xl mx-auto mb-8 leading-relaxed">
+            Acesse {totalBooks}+ livros jurídicos, estude com IA e transforme seu conhecimento em sucesso profissional.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-scale-in" style={{
-        animationDelay: '0.2s'
-      }}>
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-netflix-accent/20">
-            <BookOpen className="text-netflix-accent mx-auto mb-2" size={32} />
-            <div className="text-2xl font-bold text-white">{totalBooks}+</div>
+        {/* Quick Stats */}
+        <div className="flex justify-center items-center space-x-8 mb-12 animate-scale-in" style={{ animationDelay: '0.2s' }}>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-netflix-accent">{totalBooks}+</div>
             <div className="text-sm text-netflix-secondary">Livros</div>
           </div>
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-netflix-accent/20">
-            <Star className="text-netflix-accent mx-auto mb-2" size={32} />
-            <div className="text-2xl font-bold text-white">{totalAreas}</div>
-            <div className="text-sm text-netflix-secondary">Áreas do Direito</div>
+          <div className="w-px h-12 bg-netflix-secondary/30"></div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-netflix-accent">{totalAreas}</div>
+            <div className="text-sm text-netflix-secondary">Áreas</div>
           </div>
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-netflix-accent/20">
-            <Sparkles className="text-netflix-accent mx-auto mb-2" size={32} />
-            <div className="text-2xl font-bold text-white">IA</div>
-            <div className="text-sm text-netflix-secondary">Assistente Jurídico</div>
-          </div>
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-netflix-accent/20">
-            <Users className="text-netflix-accent mx-auto mb-2" size={32} />
-            <div className="text-2xl font-bold text-white">100%</div>
-            <div className="text-sm text-netflix-secondary">Atualizado</div>
+          <div className="w-px h-12 bg-netflix-secondary/30"></div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-netflix-accent">IA</div>
+            <div className="text-sm text-netflix-secondary">Assistente</div>
           </div>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-in-right" style={{
-        animationDelay: '0.4s'
-      }}>
-          <Button onClick={handleExploreClick} className="bg-netflix-accent hover:bg-[#c11119] text-white px-8 py-3 text-lg font-semibold rounded-full transform transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl">
-            <BookOpen className="mr-2" size={20} />
-            Começar a Estudar
+        {/* Main CTA */}
+        <div className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.4s' }}>
+          <Button 
+            onClick={handleExploreClick}
+            size="lg"
+            className="bg-netflix-accent hover:bg-[#c11119] text-white px-12 py-4 text-xl font-semibold rounded-full transform transition-all duration-300 hover:scale-105 shadow-2xl group"
+          >
+            <Play className="mr-3 group-hover:scale-110 transition-transform" size={24} />
+            Começar Agora
+            <ArrowRight className="ml-3 group-hover:translate-x-1 transition-transform" size={24} />
           </Button>
-          <Button onClick={() => navigate('/categories')} variant="outline" className="border-netflix-accent text-netflix-accent hover:bg-netflix-accent hover:text-white px-8 py-3 text-lg rounded-full transition-all duration-300">
-            Ver Todas as Áreas
-          </Button>
+          
+          <div className="text-netflix-secondary text-sm">
+            ✨ Sem cadastro necessário • Acesso imediato • 100% gratuito
+          </div>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="mt-12 animate-fade-in" style={{
-        animationDelay: '0.6s'
-      }}>
-          <p className="text-netflix-secondary mb-4">Usado por estudantes e profissionais do Direito</p>
-          <div className="flex justify-center items-center space-x-6 text-netflix-secondary">
+        {/* Trust Signal */}
+        <div className="mt-16 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+          <div className="inline-flex items-center space-x-6 bg-black/20 backdrop-blur-sm rounded-2xl px-8 py-4 border border-netflix-accent/10">
             <div className="flex items-center">
-              <Star className="text-yellow-400 mr-1" size={16} />
-              <span className="text-sm">Conteúdo de Estudos</span>
+              <BookOpen className="text-netflix-accent mr-2" size={16} />
+              <span className="text-netflix-secondary text-sm">Conteúdo Atualizado</span>
             </div>
             <div className="flex items-center">
-              <Book className="text-netflix-accent mr-1" size={16} />
-              <span className="text-sm">100% Atualizado</span>
+              <Sparkles className="text-blue-400 mr-2" size={16} />
+              <span className="text-netflix-secondary text-sm">IA Integrada</span>
             </div>
             <div className="flex items-center">
-              <Sparkles className="text-blue-400 mr-1" size={16} />
-              <span className="text-sm">Powered by IA</span>
+              <Book className="text-green-400 mr-2" size={16} />
+              <span className="text-netflix-secondary text-sm">Acesso Total</span>
             </div>
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default HeroSection;
