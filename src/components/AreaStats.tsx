@@ -26,26 +26,7 @@ const AreaStats: React.FC = () => {
         Biblioteca em números
       </h2>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="bg-netflix-card rounded-lg p-4 flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-bold text-netflix-accent">{books.length}</span>
-          <span className="text-sm text-netflix-secondary mt-1">Total de livros</span>
-        </div>
-        
-        <div className="bg-netflix-card rounded-lg p-4 flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-bold text-netflix-accent">
-            {Object.keys(areaCounts).length}
-          </span>
-          <span className="text-sm text-netflix-secondary mt-1">Áreas disponíveis</span>
-        </div>
-        
-        <div className="bg-netflix-card rounded-lg p-4 flex flex-col items-center justify-center text-center">
-          <span className="text-2xl font-bold text-netflix-accent">
-            <Dices size={24} />
-          </span>
-          <span className="text-sm text-netflix-secondary mt-1">Conteúdo atualizado</span>
-        </div>
-      </div>
+      
       
       
     </div>;
