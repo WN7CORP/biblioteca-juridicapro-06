@@ -5,8 +5,7 @@ import { useLibrary } from '@/contexts/LibraryContext';
 import MobileNav from '@/components/MobileNav';
 import Header from '@/components/Header';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, Grid, List, Sparkles } from 'lucide-react';
-import BookGrid from '@/components/BookGrid';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import BookList from '@/components/BookList';
 import BookDetailsModal from '@/components/BookDetailsModal';
 import CategoryHeroSection from '@/components/CategoryHeroSection';
@@ -20,7 +19,6 @@ const Categories: React.FC = () => {
   const { areaName } = useParams<{ areaName?: string }>();
   const [selectedBook, setSelectedBook] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [highlightedBookId, setHighlightedBookId] = useState<number | null>(null);
 
   // Check if we came from AI search with a book to highlight
@@ -76,7 +74,7 @@ const Categories: React.FC = () => {
       <div className={`container mx-auto px-4 ${isMobile ? 'pt-20' : 'pt-24'} pb-16`}>
         {areaName ? (
           <>
-            {/* Area specific view */}
+            {/* Area specific view - Always show as list */}
             <div className="flex items-center justify-between mb-8 animate-fade-in">
               <div className="flex items-center">
                 <button 
@@ -105,46 +103,13 @@ const Categories: React.FC = () => {
                   <span>Busca: "{location.state.searchQuery}"</span>
                 </div>
               )}
-              
-              {filteredBooks.length > 0 && (
-                <div className="flex items-center space-x-2 bg-netflix-card rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded transition-all duration-200 ${
-                      viewMode === 'grid' 
-                        ? 'bg-netflix-accent text-white' 
-                        : 'text-netflix-secondary hover:text-white'
-                    }`}
-                  >
-                    <Grid size={18} />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-all duration-200 ${
-                      viewMode === 'list' 
-                        ? 'bg-netflix-accent text-white' 
-                        : 'text-netflix-secondary hover:text-white'
-                    }`}
-                  >
-                    <List size={18} />
-                  </button>
-                </div>
-              )}
             </div>
             
-            {viewMode === 'grid' ? (
-              <BookGrid 
-                books={filteredBooks} 
-                onBookClick={handleBookClick}
-                highlightedBookId={highlightedBookId}
-              />
-            ) : (
-              <BookList 
-                books={filteredBooks} 
-                onBookClick={handleBookClick}
-                highlightedBookId={highlightedBookId}
-              />
-            )}
+            <BookList 
+              books={filteredBooks} 
+              onBookClick={handleBookClick}
+              highlightedBookId={highlightedBookId}
+            />
           </>
         ) : (
           <>

@@ -13,10 +13,7 @@ const HeroSection: React.FC = () => {
   const totalAreas = [...new Set(books.map(book => book.area))].length;
 
   const handleExploreClick = () => {
-    const element = document.getElementById('featured-books');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    navigate('/categories');
   };
 
   return (
